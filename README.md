@@ -1,4 +1,4 @@
-# cursor-harness
+# marumo-cloud
 
 Cursor ハーネスの**テンプレート**。対象は席・正本・ゲート・cycle（[ADR 0039](docs/decisions/0039-harness-template-cycle-graph.md)）。
 ライセンスは [MIT](LICENSE)（Copyright (c) 2026 marumo333）。
