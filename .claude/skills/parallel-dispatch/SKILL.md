@@ -26,6 +26,8 @@ description: 計画確認のあと、ファイルが重ならないスライス�
 
 ## ディスパッチの手順
 
+同じ規則の判定は `node scripts/parallel-slices.mjs`（`scripts/lib/parallel-slices.mjs`）。Task は起動しない。同時実行の数値上限は無い。数は重ならないスライスの数。
+
 1. superpowers `writing-plans` で **2-5分粒度**にタスクを分解し、各タスクの「触るファイル群」を明記する。
 2. `plan-confirm` を通す。重ならないスライスが無い修正では、この skill を使わない。
 3. 仕様が明文化できた、ファイルが重ならないタスクのみ `grok_task`（[[0040]] / [[0049]] / `model-routing.yaml`）に委譲する。
