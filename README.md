@@ -45,7 +45,7 @@ Cursor のクラウドでリポを開く。このリポジトリの clone 後は
 
 実行の一覧は Cursor のクラウド実行面で見る。このリポジトリは席の許可とゲートである。数十体を `packet.rego` の席にはしない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 
-![モデルとレビュー](docs/architecture/review-overview.png)
+![モデルとレビュー](docs/architecture/review-overview.gif)
 
 ### 監査
 
@@ -53,7 +53,7 @@ Cursor のクラウドでリポを開く。このリポジトリの clone 後は
 必須の辺は無い。検証用の subagent は出さない。
 feature-gate は判定であり、正本へは書かない。正本へ入るのは人間マージだけ。
 
-![監査](docs/architecture/audit-overview.png)
+![監査](docs/architecture/audit-overview.gif)
 
 ### ランタイム
 
@@ -61,13 +61,13 @@ feature-gate は判定であり、正本へは書かない。正本へ入るの�
 hooks を踏むのは実装の commit。feature-gate は判定であり正本へは書かない。
 `packet.canon` の deny は `cycle-record` が dispatch を書くときに評価する。
 
-![ランタイム](docs/architecture/runtime-overview.png)
+![ランタイム](docs/architecture/runtime-overview.gif)
 
 ### 再起的自己改善
 
 人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
 
-![再起的自己改善](docs/architecture/self-improve-flow.png)
+![再起的自己改善](docs/architecture/self-improve-flow.gif)
 
 ## 構成
 
