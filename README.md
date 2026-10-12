@@ -39,17 +39,17 @@ Cursor のクラウドでリポを開く。このリポジトリの clone 後は
 
 ### モデルとレビュー
 
-常時動くのは親エージェント Grok 4.7 high だけ。型の正解は `tsc --noEmit`。品質の指摘は親が1回、4つに分ける。コードを変えるのは直すだけ。緑のあと二周目は開かない。Fable の backend-architect は並列展開の前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。
+常時の席は親エージェント Grok 4.7 high である。計画確認のあと、ファイルが重ならないスライスは `grok-4.7-high` で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が1回、4つに分ける。コードを変えるのは直すだけ。緑のあと二周目は開かない。Fable の backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。
 
 モデルは三層に分ける。生きている席のスラッグは `cycle/model-routing.yaml` と skill に書く。親と `grok_task` は `grok-4.7-high`。計画と人が明示したレビューは `fable_pin`。ゲートが見るのは族名と件数と effort の幅で、世代のスラッグは見ない。起動しない verifier と reflector の定義に `model:` は置かない。使わないスラッグは yaml に残さない。
 
-機能を分けた複数のクラウドエージェントと、その実行の一覧は、Cursor のクラウド実行面で見る。このリポジトリは席の許可とゲートである。数十体を `packet.rego` の席にはしない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
+実行の一覧は Cursor のクラウド実行面で見る。このリポジトリは席の許可とゲートである。数十体を `packet.rego` の席にはしない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 
 ![モデルとレビュー](docs/architecture/review-overview.png)
 
 ### 監査
 
-受付 → 親が計画と実装 → 契約と feature-gate → 公開。
+受付 → 計画確認 → 重ならないスライスは同時、重なるファイルは親 → 契約と feature-gate → 公開。完成は 1 本の PR。
 必須の辺は無い。検証用の subagent は出さない。
 feature-gate は判定であり、正本へは書かない。正本へ入るのは人間マージだけ。
 
