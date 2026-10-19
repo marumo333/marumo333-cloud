@@ -922,3 +922,21 @@
 - 記録を git の外へ移すことはしていない。`GITHUB_TOKEN` で開いた PR では、Actions の workflow が自動では走らない。
 - この修正が main に入る前の記録用 PR を先にマージすると、もう1周だけ開く。main の script を含む merge commit なら、`GITHUB_HEAD_REF` で止まる。
 - シェルの展開は完全ではない。
+
+---
+
+## 2026-10-19 — 始め方は、このハーネスでは機能を作らない
+
+**問い**
+
+- `TEMPLATE.md` の「プロダクトを始める」が、このリポジトリで `start-feature` に落ちる順になっていないか。
+
+**効いた**
+
+- このリポジトリ（name が `marumo-cloud` で `policy/canon.rego` がある）の順は `pnpm install` と `init --product` だけにした。機能ファイルは作らない。テンプレートの remote では `--apply` も消さない。
+- name を変えたプロダクトの順は `init`、`start-feature`、`check-behavior` である。作った直後の検査は失敗する。`--product --apply` はこの順に入れない。
+- `scripts/template-procedure.test.mjs` が両方の手順を実行し、文書のコマンド欄を見る。
+
+**失敗 / リスク**
+
+- name を変える前にテンプレート以外の remote で `--apply` を付けると、機能ファイルはまだ作れないまま蓄積が空の周に戻る。
