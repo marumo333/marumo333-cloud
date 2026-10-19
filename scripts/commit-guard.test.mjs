@@ -98,6 +98,45 @@ test('フラグ位置のコマンド置換は拒否', () => {
 	assert.equal(r.action, 'deny');
 });
 
+test('代入した --no-verify は拒否', () => {
+	const r = decideCommitGuard('X=--no-verify; git commit $X -m "feat: 抜け道。"');
+	assert.equal(r.action, 'deny');
+});
+
+test('前置代入と ${NAME} の -n は拒否', () => {
+	const r = decideCommitGuard("X='-n' git commit \${X} -m \"feat: 抜け道。\"");
+	assert.equal(r.action, 'deny');
+});
+
+test('printf を sh に渡した -n は拒否', () => {
+	const r = decideCommitGuard(`printf 'git commit -n -m "feat: 抜け道。"' | sh`);
+	assert.equal(r.action, 'deny');
+});
+
+test('echo を bash に渡した --no-verify は拒否', () => {
+	const r = decideCommitGuard(`echo "git commit --no-verify -m 'feat: 抜け道。'" | bash`);
+	assert.equal(r.action, 'deny');
+});
+
+test('パイプの中の正しい commit は外側では許可', () => {
+	const r = decideCommitGuard(`printf 'git commit -m "feat: 正しい。" ' | sh`);
+	assert.equal(r.action, 'allow');
+});
+
+test('-F の値にあるコマンド置換は hook 回避にしない', () => {
+	const r = decideCommitGuard('git commit -F $(mktemp) -m "feat: ファイルから読む。"');
+	assert.equal(r.action, 'run-pre-commit');
+});
+
+test('--file の値にあるコマンド置換は hook 回避にしない', () => {
+	const spaced = decideCommitGuard('git commit --file $(mktemp) -m "feat: ファイルから読む。"');
+	const attached = decideCommitGuard('git commit -F$(mktemp) -m "feat: ファイルから読む。"');
+	const equals = decideCommitGuard('git commit --file=$(mktemp) -m "feat: ファイルから読む。"');
+	assert.equal(spaced.action, 'run-pre-commit');
+	assert.equal(attached.action, 'run-pre-commit');
+	assert.equal(equals.action, 'run-pre-commit');
+});
+
 test('code-mode の step 内 --no-verify も拒否', () => {
 	const r = decideCommitGuard(
 		"node scripts/code-mode.mjs --step 'git commit --no-verify -m \"feat: ダメ。\"'"

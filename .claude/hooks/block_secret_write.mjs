@@ -2,6 +2,7 @@
 // PreToolUse(Write|Edit): 規約1 — PUBLIC_ 以外のシークレットをクライアント/ソースに出さない。
 // 実 .env の書き込みも防ぐ。
 import { readFileSync } from 'node:fs';
+import { isBlockedEnvPath } from '../../scripts/lib/blocked-env.mjs';
 import { parseHookInput } from '../../scripts/lib/hook-json.mjs';
 
 let raw = '';
@@ -20,10 +21,9 @@ const fp = String(ti.file_path || ti.path || '').replace(/\\/g, '/');
 const content = String(ti.content ?? ti.new_string ?? '');
 if (!fp) process.exit(0);
 
-// 実 .env（.env.example は除く）は禁止
-if (/(^|\/)\.env(\.[a-z]+)?$/.test(fp) && !/\.env\.example$/.test(fp)) {
+if (isBlockedEnvPath(fp)) {
 	console.error(
-		'[block_secret_write] 規約1: 実 .env の書き込み/コミットは禁止（.env.example のみ可）。'
+		'[block_secret_write] 規約1: 実 .env の書き込み/コミットは禁止（.env.example と .env.sample のみ可）。'
 	);
 	process.exit(2);
 }

@@ -68,14 +68,12 @@ export function parseGitCommitCommand(raw) {
 			i += 1;
 			continue;
 		}
-		if (t.includes('$(') || t.includes('`')) {
-			skipsHooks = true;
-			i += 1;
+		if (takesValueLong(t)) {
+			i += t.includes('=') ? 1 : 2;
 			continue;
 		}
 		if (t.startsWith('-') && !t.startsWith('--')) {
 			const chars = t.slice(1).split('');
-			let jumped = false;
 			for (let c = 0; c < chars.length; c += 1) {
 				const ch = chars[c];
 				if (ch === 'n') skipsHooks = true;
@@ -86,18 +84,20 @@ export function parseGitCommitCommand(raw) {
 						messages.push(tokens[i + 1] ?? '');
 						i += 1;
 					}
-					jumped = true;
 					break;
 				}
 				if ('FtCc'.includes(ch)) {
 					const rest = chars.slice(c + 1).join('');
 					if (!rest) i += 1;
-					jumped = true;
 					break;
 				}
 			}
 			i += 1;
-			if (jumped) continue;
+			continue;
+		}
+		if (t.includes('$(') || t.includes('`')) {
+			skipsHooks = true;
+			i += 1;
 			continue;
 		}
 		i += 1;
@@ -108,6 +108,12 @@ export function parseGitCommitCommand(raw) {
 
 function empty() {
 	return { isCommit: false, skipsHooks: false, foreignRepo: false, messages: [] };
+}
+
+const VALUE_LONG = ['--file', '--template', '--reuse-message', '--reedit-message'];
+
+function takesValueLong(t) {
+	return VALUE_LONG.some((name) => t === name || t.startsWith(`${name}=`));
 }
 
 function isNoVerifyLongOpt(t) {
