@@ -75,3 +75,22 @@ test('-C で別ディレクトリなら foreignRepo', () => {
 	const r = parseGitCommitCommand('git -C /tmp/other commit -m "feat: 越境。"');
 	assert.equal(r.foreignRepo, true);
 });
+
+test('-F と --file の値は hook 回避にしない', () => {
+	for (const cmd of [
+		'git commit -F $(mktemp) -m "feat: ファイルから読む。"',
+		'git commit -F$(mktemp) -m "feat: ファイルから読む。"',
+		'git commit --file $(mktemp) -m "feat: ファイルから読む。"',
+		'git commit --file=$(mktemp) -m "feat: ファイルから読む。"'
+	]) {
+		const r = parseGitCommitCommand(cmd);
+		assert.equal(r.isCommit, true, cmd);
+		assert.equal(r.skipsHooks, false, cmd);
+		assert.deepEqual(r.messages, ['feat: ファイルから読む。']);
+	}
+});
+
+test('フラグ位置のコマンド置換は hook を飛ばす', () => {
+	const r = parseGitCommitCommand('git commit $(echo --no-verify) -m "feat: 抜け道。"');
+	assert.equal(r.skipsHooks, true);
+});

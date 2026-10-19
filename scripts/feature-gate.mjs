@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * OPA の検査と契約、レビュー上限、プロダクト差分。Feature 票は使わない。
- * canon はハーネスの正本。features/ src/ app/ は product_path で振る舞いと型を見る。
+ * canon はハーネスの正本。features/ src/ app/ は product_path で振る舞いのテストと型を見る。
  * 子スクリプトは import.meta.url の隣。policy と契約と events の根は HARNESS_ROOT。
  */
 import { execFileSync } from 'node:child_process';

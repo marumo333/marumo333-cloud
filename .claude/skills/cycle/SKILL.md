@@ -44,5 +44,5 @@ token_ledger は観測項だけ。3指標には入れない。
 
 ## 再起
 
-人間が PR をマージしたあと `cycle-after-merge` は承認を記録し、次の cycle を `after-merge` で開く。Feature は起票しない。
+人間が作業の PR をマージしたあと `cycle-after-merge` は承認を記録し、次の cycle を `after-merge` で開く。枝が `cycle/` の記録用 PR では承認も次周も書かない。Feature は起票しない。
 `human_approved` は CLI から書かない。

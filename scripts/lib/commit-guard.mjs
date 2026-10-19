@@ -1,6 +1,7 @@
 import { lintCommitMessage } from './commit-msg-lint.mjs';
 import { parseGitCommitCommand } from './git-commit-cmd.mjs';
 import { extractCodeModeSteps, isCodeModeCommand } from './code-mode.mjs';
+import { expandSimpleAssignments } from './shell-assign.mjs';
 
 export function splitShellSegments(command) {
 	return String(command ?? '')
@@ -27,14 +28,27 @@ export function quotedPayloads(command) {
 	return out;
 }
 
-export function decideCommitGuard(command, depth = 0) {
-	const cmd = String(command ?? '');
-	if (bypassesHookInfra(cmd)) {
+export function pipedShellPayloads(command) {
+	const out = [];
+	const re =
+		/\b(?:printf|echo)\b[^|;]*?(['"])([\s\S]*?)\1\s*\|\s*(?:\/usr\/bin\/|\/bin\/)?(?:sh|bash|dash|zsh)\b/g;
+	let match;
+	while ((match = re.exec(String(command ?? '')))) {
+		if (match[2]) out.push(match[2]);
+	}
+	return out;
+}
+
+export function decideCommitGuard(command, depth = 0, inherited) {
+	const raw = String(command ?? '');
+	if (bypassesHookInfra(raw)) {
 		return { action: 'deny', errors: ['[commit-guard] hook 基盤の無効化は禁止。'] };
 	}
+	const expanded = expandSimpleAssignments(raw, inherited);
+	const cmd = expanded.text;
 	if (depth < 3) {
-		for (const payload of quotedPayloads(cmd)) {
-			const inner = decideCommitGuard(payload, depth + 1);
+		for (const payload of [...quotedPayloads(cmd), ...pipedShellPayloads(cmd)]) {
+			const inner = decideCommitGuard(payload, depth + 1, expanded.env);
 			if (inner.action === 'deny') return inner;
 		}
 	}

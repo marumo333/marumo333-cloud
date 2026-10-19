@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-/** 振る舞いが空でなく、テストが置き換えられているかを見る。 */
+/** 振る舞いが空でなく、テストが置き換えられ、そのテストが成功するかを見る。 */
+import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -55,7 +56,36 @@ export function runCheckBehavior(root) {
 		}
 	}
 	if (problems.length) return { ok: false, lines: problems };
-	return { ok: true, lines: [`[check-behavior] ${slugs.length} 機能`] };
+	for (const slug of slugs) {
+		const failure = runFeatureTest(root, slug);
+		if (failure) problems.push(failure);
+	}
+	if (problems.length) return { ok: false, lines: problems };
+	return { ok: true, lines: [`[check-behavior] ${slugs.length} 機能のテストが成功`] };
+}
+
+/**
+ * @param {string} root
+ * @param {string} slug
+ */
+function runFeatureTest(root, slug) {
+	const testPath = join(root, 'features', slug, `${slug}.test.mjs`);
+	const env = { ...process.env };
+	// 親が node --test のとき、子の --test は再入としてファイルを実行しない。
+	delete env.NODE_TEST_CONTEXT;
+	const res = spawnSync(process.execPath, ['--test', testPath], {
+		cwd: root,
+		encoding: 'utf8',
+		env,
+		timeout: 120000
+	});
+	if (res.status === 0 && !res.error) return '';
+	const detail = `${res.stdout || ''}\n${res.stderr || ''}\n${res.error ? res.error.message : ''}`
+		.trim()
+		.split('\n')
+		.slice(-12)
+		.join('\n');
+	return `[check-behavior] ${slug}: テストが失敗\n${detail}`;
 }
 
 function main() {

@@ -80,6 +80,25 @@ test('壊れた hook 入力は拒否し、典型以外の .env 読みは止め�
 	}
 });
 
+test('複数段の .env 書き込みは拒否し、example と sample は通す', () => {
+	const hook = join(ROOT, '.claude/hooks/block_secret_write.mjs');
+	for (const filePath of ['.env.production.local', 'deploy/.env.staging.local', '.envrc']) {
+		const denied = spawnSync(process.execPath, [hook], {
+			input: JSON.stringify({ tool_input: { file_path: filePath, content: 'A=1\n' } }),
+			encoding: 'utf8'
+		});
+		assert.equal(denied.status, 2, filePath);
+		assert.match(denied.stderr, /規約1/);
+	}
+	for (const filePath of ['.env.example', '.env.sample', 'src/app.js']) {
+		const allowed = spawnSync(process.execPath, [hook], {
+			input: JSON.stringify({ tool_input: { file_path: filePath, content: 'A=1\n' } }),
+			encoding: 'utf8'
+		});
+		assert.equal(allowed.status, 0, filePath);
+	}
+});
+
 test('秘密の書き込みは src 以外も止める', () => {
 	const hook = join(ROOT, '.claude/hooks/block_secret_write.mjs');
 	const value = 'sk-' + 'a'.repeat(20);

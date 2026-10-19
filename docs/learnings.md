@@ -902,3 +902,23 @@
 **失敗 / リスク**
 
 - 作者の日記と `cycle/events.jsonl` はこのテンプレートの remote に残る。プロダクトは `--apply` で空の周に戻す。過去のイベントに残った族名は、当時の記録なので書き換えていない。
+
+---
+
+## 2026-10-19 — 記録用 PR は次周を開かない
+
+**問い**
+
+- 記録用 PR のマージが、また記録用 PR を作っていないか。振る舞い検査はテストを実行しているか。
+
+**効いた**
+
+- `harness-cycle` は枝が `cycle/` のとき走らない。`cycle-after-merge` は `PR_HEAD_REF` か `GITHUB_HEAD_REF` が `cycle/` なら、承認も次周も書かない。
+- `check-behavior` は書式のあと、`features/<slug>/<slug>.test.mjs` を `node --test` で実行する。失敗ならゲートも失敗する。
+- commit ガードは、同じコマンドの単純な代入を `$NAME` に展開し、`printf` や `echo` を `sh` へ渡す中も見る。`-F` と `--file` の値にあるコマンド置換は hook 回避にしない。書き込みは `.env.production.local` も止める。
+
+**失敗 / リスク**
+
+- 記録を git の外へ移すことはしていない。`GITHUB_TOKEN` で開いた PR では、Actions の workflow が自動では走らない。
+- この修正が main に入る前の記録用 PR を先にマージすると、もう1周だけ開く。main の script を含む merge commit なら、`GITHUB_HEAD_REF` で止まる。
+- シェルの展開は完全ではない。

@@ -38,10 +38,10 @@ node scripts/start-feature.mjs <slug>
 node scripts/check-behavior.mjs
 ```
 
-`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` が消す予定を出すだけで、ファイルは残す。`--product --apply` が `cycle/` と決定以外の `docs/` を空の周に戻し、この用語集は無いときだけ作り、あるときは残す。テンプレートの remote では消さない。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられているときだけ成功する。二度目は既存ファイルを上書きしない。
+`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` が消す予定を出すだけで、ファイルは残す。`--product --apply` が `cycle/` と決定以外の `docs/` を空の周に戻し、この用語集は無いときだけ作り、あるときは残す。テンプレートの remote では消さない。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられていて、そのテストが成功するときだけ成功する。二度目は既存ファイルを上書きしない。
 
 ## 1周
 
 1. 親はホストの既定。モデル ID は指定しない。検証と内省は親が行う。検証用の subagent は出さない。品質の機械ゲートは人が頼まなくても commit で走る。追加のモデル席は人が明示した1回だけ。
 2. 機能は `node scripts/start-feature.mjs <slug>` の振る舞いとテストで進める。
-3. 人間がマージすると次の cycle が開く。Feature 票は開かない。エージェントは自動起動しない。
+3. 人間が作業の PR をマージすると次の cycle が開く。枝が `cycle/` の記録用 PR では開かない。Feature 票は開かない。エージェントは自動起動しない。

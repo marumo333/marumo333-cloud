@@ -13,7 +13,7 @@ Cursor、Claude Code、Codex で同じ契約を使う**テンプレート**。�
 
 秘密の読み取りガードが止めるのは、ファイルを直接開く読みと、`cat` / `head` / `tail` / `less` / `more` / `source` / `printenv` だけである。`grep`、`awk`、`python` の open、`cp` は止まらない。拒否リストを足しても、シェルの書き方は残る。Claude Code は `.claude/settings.json` の `permissions.deny` が `Read(./.env)` を止める。確実に守ることは、秘密をリポジトリへ置かないことである。
 
-commit ガードは `--no-verify` と `-n` に加え、`sh -c` と `eval` の中、フラグ位置のコマンド置換を拒否する。壊れた hook 入力は許可に倒さず拒否する。完全なシェル解析ではない。
+commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単純な代入、`sh -c` と `eval` の中、`printf` や `echo` を `sh` へ渡す書き方、フラグ位置のコマンド置換を拒否する。`-F` と `--file` の値にあるコマンド置換は hook 回避にしない。壊れた hook 入力は許可に倒さず拒否する。完全なシェル解析ではない。
 
 秘密の書き込みは、パスが `src` であるかに依存しない。Codex の編集が `apply_patch` のとき、`.codex/hooks.json` の matcher にその名前を含める。ホストが別名を出す場合は、このガードには届かない。
 
@@ -51,7 +51,7 @@ commit ガードは `--no-verify` と `-n` に加え、`sh -c` と `eval` の中
 このハーネスは席・ゲート・cycle で回る。入力は人間の依頼と `features/<slug>/` の振る舞い、
 実行は席、token効率化は code-mode と packet、品質ゲートは hooks / OPA / feature-gate、
 成果は振る舞いのテストと `docs/decisions/` と policy、フィードバックは次の cycle である。
-監査の主体は親である。モデル ID は指定しない。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧はハーネスの正本で、差分がそこを含むと stay を拒否する。被覆率にはしない。`features/` と `src/` と `app/` の差分は、振る舞いと `tsc --noEmit` を見る。正本へは書かない。
+監査の主体は親である。モデル ID は指定しない。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧はハーネスの正本で、差分がそこを含むと stay を拒否する。被覆率にはしない。`features/` と `src/` と `app/` の差分は、振る舞いのテストと `tsc --noEmit` を見る。正本へは書かない。
 
 図は [`docs/architecture/`](docs/architecture/) のアーキテクチャ概要。実線は実行、破線は条件付きか判定のみ。編集する正は同ディレクトリの mermaid（[`review-overview.mmd`](docs/architecture/review-overview.mmd) ほか）。README には画像だけを出す。
 
@@ -63,7 +63,7 @@ commit ガードは `--no-verify` と `-n` に加え、`sh -c` と `eval` の中
 
 依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。三つの入口は同じ `AGENTS.md` を読む。実行はホストの既定。答えは共有の yaml には書かない。
 
-モデルとレビューのあと、人間がマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。
+モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。枝が `cycle/` の記録用 PR をマージしても、次の記録用 PR は開かない。
 
 ![入口の as-is と to-be](docs/architecture/host-entry-as-is-to-be.gif)
 

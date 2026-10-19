@@ -4,7 +4,7 @@ on:
     types: [closed]
 jobs:
   after-merge:
-    if: github.event.pull_request.merged == true
+    if: "${{ github.event.pull_request.merged == true && !startsWith(github.event.pull_request.head.ref, 'cycle/') }}"
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -18,6 +18,7 @@ jobs:
         env:
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           MERGED: 'true'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
