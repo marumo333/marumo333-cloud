@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * 人間が PR をマージしたあと: 承認を記録し、3指標を測り、必要なら次 cycle の PR を開く。
+ * 人間が作業の PR をマージしたあと: 承認を記録し、3指標を測り、必要なら次 cycle の PR を開く。
+ * 枝が cycle/ の記録用 PR では、承認も次周も書かない。
  * エージェントは起動しない（ADR 0033）。上限は policy/cycle.rego。
  */
 import { execFileSync } from 'node:child_process';
@@ -25,6 +26,11 @@ if (rawMergeSha && !/^[0-9a-f]{7,40}$/i.test(rawMergeSha)) {
 }
 const mergeSha = rawMergeSha;
 const prNumber = String(process.env.PR_NUMBER || '').replace(/[^\d]/g, '');
+const headRef = String(process.env.PR_HEAD_REF || process.env.GITHUB_HEAD_REF || '');
+if (headRef.startsWith('cycle/')) {
+	console.error('[cycle-after-merge] 記録用の枝 cycle/ のマージでは、承認も次周も書かない');
+	process.exit(0);
+}
 const humanApproved = process.env.MERGED === 'true';
 
 function events() {

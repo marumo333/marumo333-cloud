@@ -20,6 +20,9 @@ test('機能ごとの ADR と proposed と admitted を作る手順が残って�
 	assert.match(workflow, /gh pr create/);
 	assert.match(workflow, /cycle\/events\.jsonl/);
 	assert.match(workflow, /main へは直接 push しない/);
+	assert.match(workflow, /!startsWith\(github\.event\.pull_request\.head\.ref, 'cycle\/'\)/);
+	assert.match(workflow, /PR_HEAD_REF:/);
+	assert.match(merge, /記録用の枝 cycle\/ のマージでは、承認も次周も書かない/);
 	assert.equal(existsSync(join(ROOT, 'knowledge')), false);
 	assert.equal(existsSync(join(ROOT, 'docs/superpowers')), false);
 	assert.equal(existsSync(join(ROOT, 'policy/grow.rego')), false);
