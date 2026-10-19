@@ -99,6 +99,24 @@ test('動詞の3つの失敗が無いと失敗する', () => {
 	assert.ok(result.lines.some((line) => line.includes('ACTIONS.md')));
 });
 
+test('テストが失敗すると失敗する', () => {
+	const dir = root();
+	ready(dir);
+	put(
+		dir,
+		'features/checkout/requirements.md',
+		'# checkout\n\nWHEN 入力が不正\nTHE SYSTEM SHALL 状態を変えない\n'
+	);
+	put(
+		dir,
+		'features/checkout/checkout.test.mjs',
+		"import { test } from 'node:test';\nimport assert from 'node:assert/strict';\n\ntest('checkout', () => {\n\tassert.equal(1, 2);\n});\n"
+	);
+	const result = runCheckBehavior(dir);
+	assert.equal(result.ok, false);
+	assert.ok(result.lines.some((line) => line.includes('テストが失敗')));
+});
+
 test('テストファイルが無いと失敗する', () => {
 	const dir = root();
 	ready(dir);
