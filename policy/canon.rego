@@ -2,7 +2,8 @@ package harness.canon
 
 import rego.v1
 
-# canon パスの一覧。opa test が検査する。差分の被覆には使わない。
+# ハーネスの正本パス。差分がここを含むと stay を拒否する。被覆率にはしない。
+# プロダクト（features/ src/ app/）は product_path。feature-gate が振る舞いと型を見る。
 
 canon_path(p) if startswith(p, ".claude/skills/")
 
@@ -13,8 +14,6 @@ canon_path(p) if startswith(p, ".claude/hooks/")
 canon_path(p) if p == ".cursor/hooks.json"
 
 canon_path(p) if startswith(p, ".cursor/hooks/")
-
-canon_path(p) if p == ".cursor/log_subagent_model.mjs"
 
 # events.jsonl は追記ログ（状態）。正本は必須集合と席のピンだけ。
 canon_path(p) if p == "cycle/required-cycle.json"
@@ -46,4 +45,15 @@ canon_path(p) if startswith(p, ".github/workflows/")
 paths contains p if {
 	some p in input.diff_paths
 	canon_path(p)
+}
+
+product_path(p) if startswith(p, "features/")
+
+product_path(p) if startswith(p, "src/")
+
+product_path(p) if startswith(p, "app/")
+
+product_paths contains p if {
+	some p in input.diff_paths
+	product_path(p)
 }

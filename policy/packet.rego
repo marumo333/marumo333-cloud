@@ -10,7 +10,7 @@ modes := {"isolated", "packet"}
 
 escalates := {"stay", "trio", "ceiling", "human"}
 
-seats := {"grok", "opus", "fable", "muse"}
+seats := {"parent", "implement", "plan", "review"}
 
 has_schema if input.packet.schema == "harness-query/v1"
 
@@ -94,10 +94,6 @@ has_canon_count if is_number(input.canon_path_count)
 effort_present if input.dispatch.effort
 
 effort_ok if input.dispatch.effort in input.effort_allow
-
-is_third if input.trio_third == true
-
-is_trio if input.dispatch.escalate == "trio"
 
 walk_forbidden if {
 	some path, value
@@ -215,18 +211,3 @@ deny contains "canon 差分がある周で stay は拒否" if {
 }
 
 deny contains "ceiling は verifier / reflector の代替ではない" if input.ceiling_replaces_gate == true
-
-deny contains "Muse は trio 第3以外禁止" if {
-	has_seat
-	input.dispatch.seat == "muse"
-	not is_third
-}
-
-deny contains "Muse は escalate trio 必須" if {
-	has_seat
-	has_escalate
-	input.dispatch.seat == "muse"
-	not is_trio
-}
-
-deny contains "実装席を Opus に付け替えない" if input.role_swap_to_opus == true

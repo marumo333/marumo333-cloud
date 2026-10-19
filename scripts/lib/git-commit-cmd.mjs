@@ -68,6 +68,11 @@ export function parseGitCommitCommand(raw) {
 			i += 1;
 			continue;
 		}
+		if (t.includes('$(') || t.includes('`')) {
+			skipsHooks = true;
+			i += 1;
+			continue;
+		}
 		if (t.startsWith('-') && !t.startsWith('--')) {
 			const chars = t.slice(1).split('');
 			let jumped = false;

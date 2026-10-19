@@ -17,13 +17,15 @@ const ROLE_BY_NODE = {
 	'skill:harness-grow': 'gate'
 };
 
+export const SEATS = new Set(['parent', 'implement', 'plan', 'review']);
+
 const SEATS_BY_NODE = {
-	'skill:harness-api-budget': ['grok'],
-	'skill:adversarial-review': ['fable', 'grok', 'muse'],
-	'skill:verify': ['opus'],
-	'skill:reflect': ['opus'],
-	'skill:plan-confirm': ['fable'],
-	'skill:harness-grow': ['fable']
+	'skill:harness-api-budget': ['parent'],
+	'skill:adversarial-review': ['review'],
+	'skill:verify': ['parent'],
+	'skill:reflect': ['parent'],
+	'skill:plan-confirm': ['plan'],
+	'skill:harness-grow': ['plan']
 };
 
 const EFFORT_ALLOW = {
@@ -35,9 +37,7 @@ const EFFORT_ALLOW = {
 	ceiling: ['high']
 };
 
-export function roleFor(node, seat) {
-	if (node === 'skill:adversarial-review' && seat === 'muse') return 'third';
-	if (node === 'skill:harness-api-budget' && seat === 'opus') return 'parent';
+export function roleFor(node, _seat) {
 	return ROLE_BY_NODE[node] ?? 'implement';
 }
 
@@ -96,20 +96,18 @@ export function buildDispatchPolicyInput({
 		canon_path_count,
 		required_mode,
 		expected_seats: SEATS_BY_NODE[dispatch.node] ?? [],
-		trio_third:
-			dispatch.node === 'skill:adversarial-review' &&
-			dispatch.seat === 'muse' &&
-			dispatch.escalate === 'trio',
 		ceiling_replaces_gate:
-			dispatch.escalate === 'ceiling' && (dispatch.node === 'skill:verify' || dispatch.node === 'skill:reflect'),
-		role_swap_to_opus: (role === 'parent' || role === 'implement') && dispatch.seat === 'opus'
+			dispatch.escalate === 'ceiling' && (dispatch.node === 'skill:verify' || dispatch.node === 'skill:reflect')
 	};
 }
 
 function opaBin() {
-	const pinned = join(WORKSPACE, '.tools', 'opa');
-	if (!existsSync(pinned)) throw new Error('OPA が .tools/opa に無い');
-	return pinned;
+	const roots = [process.env.HARNESS_ROOT, WORKSPACE].filter(Boolean);
+	for (const root of roots) {
+		const pinned = join(root, '.tools', 'opa');
+		if (existsSync(pinned)) return pinned;
+	}
+	throw new Error('OPA が .tools/opa に無い');
 }
 
 export function evalPacketDeny(input, policyDir = join(WORKSPACE, 'policy')) {
@@ -204,9 +202,9 @@ function resolveMergeBase(root) {
 	throw new Error('canon 件数を導出できない（merge-base 欠落）。欠落で stay を通さない');
 }
 
-export function countCanonPaths(root, policyDir = join(WORKSPACE, 'policy')) {
+export function listDiffPaths(root) {
 	const mb = resolveMergeBase(root);
-	const diff = [
+	return [
 		...new Set([
 			...gitLines(root, ['diff', '--cached', '--name-only']),
 			...gitLines(root, ['diff', '--name-only']),
@@ -214,19 +212,30 @@ export function countCanonPaths(root, policyDir = join(WORKSPACE, 'policy')) {
 			...gitLines(root, ['diff', '--name-only', mb])
 		])
 	];
+}
+
+export function countCanonPaths(root, policyDir = join(WORKSPACE, 'policy')) {
+	const diff = listDiffPaths(root);
 	if (!diff.length) return 0;
-	const paths = evalHarnessCanonPaths(diff, policyDir);
+	const paths = evalHarnessQuery(diff, 'data.harness.canon.paths', policyDir);
 	if (!Array.isArray(paths)) throw new Error('harness.canon.paths が配列ではない');
 	return paths.length;
 }
 
-function evalHarnessCanonPaths(diff_paths, policyDir) {
+export function evalProductPaths(diff, policyDir = join(WORKSPACE, 'policy')) {
+	if (!diff.length) return [];
+	const paths = evalHarnessQuery(diff, 'data.harness.canon.product_paths', policyDir);
+	if (!Array.isArray(paths)) throw new Error('harness.canon.product_paths が配列ではない');
+	return paths;
+}
+
+function evalHarnessQuery(diff_paths, query, policyDir) {
 	const opa = opaBin();
 	const dir = mkdtempSync(join(tmpdir(), 'canon-opa-'));
 	const inputFile = join(dir, 'input.json');
 	writeFileSync(inputFile, JSON.stringify({ diff_paths }));
 	try {
-		const out = execFileSync(opa, ['eval', '-f', 'json', '-d', policyDir, '--input', inputFile, 'data.harness.canon.paths'], {
+		const out = execFileSync(opa, ['eval', '-f', 'json', '-d', policyDir, '--input', inputFile, query], {
 			encoding: 'utf8'
 		});
 		const parsed = JSON.parse(out);

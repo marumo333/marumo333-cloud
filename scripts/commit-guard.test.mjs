@@ -83,6 +83,21 @@ EOF
 	assert.equal(r.action, 'run-pre-commit');
 });
 
+test('sh -c の中の -n は拒否', () => {
+	const r = decideCommitGuard(`sh -c "git commit -n -m 'feat: 抜け道。'"`);
+	assert.equal(r.action, 'deny');
+});
+
+test('eval の中の --no-verify は拒否', () => {
+	const r = decideCommitGuard(`eval "git commit --no-verify -m 'feat: 抜け道。'"`);
+	assert.equal(r.action, 'deny');
+});
+
+test('フラグ位置のコマンド置換は拒否', () => {
+	const r = decideCommitGuard('git commit $(echo --no-verify) -m "feat: 抜け道。"');
+	assert.equal(r.action, 'deny');
+});
+
 test('code-mode の step 内 --no-verify も拒否', () => {
 	const r = decideCommitGuard(
 		"node scripts/code-mode.mjs --step 'git commit --no-verify -m \"feat: ダメ。\"'"

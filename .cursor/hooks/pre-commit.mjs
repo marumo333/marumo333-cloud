@@ -2,15 +2,12 @@
 /** Cursor beforeShellExecution: git commit を必ず hook に通す。 */
 import { readFileSync } from 'node:fs';
 import { decideCommitGuard } from '../../scripts/lib/commit-guard.mjs';
+import { parseHookInput } from '../../scripts/lib/hook-json.mjs';
 import { runPreCommit } from '../../scripts/lib/run-pre-commit.mjs';
 
 let raw = '';
 try {
 	raw = readFileSync(0, 'utf8');
-} catch {}
-let data = {};
-try {
-	data = JSON.parse(raw || '{}');
 } catch {}
 
 function deny(message) {
@@ -22,6 +19,10 @@ function allow() {
 	process.stdout.write(JSON.stringify({ permission: 'allow' }));
 	process.exit(0);
 }
+
+const parsed = parseHookInput(raw);
+if (!parsed.ok) deny(`[pre-commit] ${parsed.error}。拒否する。`);
+const data = parsed.data;
 
 const cmd = String(data.tool_input?.command ?? data.command ?? '');
 const decision = decideCommitGuard(cmd);

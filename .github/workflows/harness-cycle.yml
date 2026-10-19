@@ -14,10 +14,11 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - name: 承認を記録し、次の cycle を開く。Feature は起票しない
+      - name: 承認を記録し、次の cycle を PR で開く。main へは直接 push しない
         env:
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
           MERGED: 'true'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -30,5 +31,12 @@ jobs:
             echo "イベントの変更なし"
             exit 0
           fi
-          git commit -m "chore: サイクル #${{ github.event.pull_request.number }} の人間承認を記録する。"
-          git push origin HEAD:"${{ github.event.pull_request.base.ref }}"
+          branch="cycle/journal-${PR_NUMBER}-${MERGE_SHA:0:7}"
+          git checkout -B "$branch"
+          git commit -m "chore: サイクル #${PR_NUMBER} の人間承認を記録する。"
+          git push origin "HEAD:${branch}"
+          gh pr create \
+            --base "$BASE_REF" \
+            --head "$branch" \
+            --title "chore: サイクル #${PR_NUMBER} の人間承認を記録する" \
+            --body "マージ後の cycle/events.jsonl だけを載せる。main へは直接 push しない。Feature は起票しない。"

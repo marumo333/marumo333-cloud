@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * OPA の検査と契約、レビュー上限。Feature 票は使わない。
- * canon の一覧は opa test が検査する。差分の被覆には使わない。
+ * OPA の検査と契約、レビュー上限、プロダクト差分。Feature 票は使わない。
+ * canon はハーネスの正本。features/ src/ app/ は product_path で振る舞いと型を見る。
  * 子スクリプトは import.meta.url の隣。policy と契約と events の根は HARNESS_ROOT。
  */
 import { execFileSync } from 'node:child_process';
@@ -9,6 +9,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ensureOpa } from './ensure-opa.mjs';
+import { runCheckBehavior } from './check-behavior.mjs';
+import { checksForProductPaths } from './lib/product-diff.mjs';
+import { evalProductPaths, listDiffPaths } from './lib/packet-policy.mjs';
 
 /**
  * 検査ロジックの位置と、読むツリーの根を分ける。
@@ -128,6 +131,52 @@ function assertPolicyIsolation() {
 	assertResolvedNamespaces();
 }
 
+function runProductTypes(gateLayout) {
+	const config = ['tsconfig.json', 'src/tsconfig.json', 'app/tsconfig.json'].find((rel) =>
+		existsSync(join(gateLayout.dataRoot, rel))
+	);
+	if (!config) fail('プロダクトの tsconfig が無い。型は tsc --noEmit で見る');
+	const tsc = join(gateLayout.scriptDir, '..', 'node_modules', 'typescript', 'lib', 'tsc.js');
+	if (!existsSync(tsc)) fail('typescript が無い。pnpm install が必要');
+	try {
+		execFileSync(process.execPath, [tsc, '--noEmit', '--pretty', 'false', '-p', join(gateLayout.dataRoot, config)], {
+			stdio: 'inherit',
+			cwd: gateLayout.dataRoot
+		});
+	} catch (e) {
+		fail(`プロダクトの型検査が失敗（終了コード ${e.status ?? '不明'}）`);
+	}
+}
+
+function runProductDiff(gateLayout) {
+	let diff;
+	try {
+		diff = listDiffPaths(gateLayout.dataRoot);
+	} catch (e) {
+		fail(`プロダクト差分を分類できない: ${e.message || e}`);
+	}
+	let product;
+	try {
+		product = evalProductPaths(diff, gateLayout.policy);
+	} catch (e) {
+		fail(`プロダクト差分の評価が失敗: ${e.message || e}`);
+	}
+	const plan = checksForProductPaths(product);
+	if (!plan.behavior && !plan.types) {
+		console.log('[feature-gate] プロダクト差分は無い');
+		return;
+	}
+	if (plan.behavior) {
+		const result = runCheckBehavior(gateLayout.dataRoot);
+		for (const line of result.lines) console.log(line);
+		if (!result.ok) fail('check-behavior が失敗');
+		if (result.lines.some((line) => line.includes('機能は無い'))) {
+			fail('features/ の差分があるが振る舞いが無い');
+		}
+	}
+	if (plan.types) runProductTypes(gateLayout);
+}
+
 function runOpaTest() {
 	assertPolicyIsolation();
 	try {
@@ -155,6 +204,7 @@ if (import.meta.url === entry) {
 		cwd: ROOT,
 		env: { ...process.env, HARNESS_ROOT: layout.dataRoot }
 	});
+	runProductDiff(layout);
 
 	console.log('[feature-gate] 成功');
 }

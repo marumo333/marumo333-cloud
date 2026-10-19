@@ -208,6 +208,7 @@ test('テンプレートの remote では cycle と docs を消さない', () =>
 	assert.equal(readFileSync(join(dir, 'docs/software-factory-survey.md'), 'utf8'), '調査\n');
 	assert.ok(result.lines.some((line) => line.includes('テンプレートの蓄積は残す')));
 	assert.equal(isTemplateOrigin('https://x-access-token:secret@github.com/marumo333/marumo333-cloud'), true);
+	assert.equal(isTemplateOrigin('https://github.com/marumo333/cursor-harness.git'), true);
 	assert.equal(shouldResetAccumulation({ product: true, origin: '', harness: true }), false);
 });
 
@@ -230,6 +231,7 @@ test('プロダクトの remote は cycle と docs を空の周に戻す', () =>
 	put(dir, 'docs/behavior-ontology-design.md', '設計\n');
 	const result = runInit(dir, {
 		product: true,
+		apply: true,
 		origin: 'https://github.com/example/product'
 	});
 	assert.equal(result.ok, true);
@@ -254,10 +256,31 @@ test('プロダクトの remote は cycle と docs を空の周に戻す', () =>
 	assert.match(glossary, /## Object type/);
 	assert.match(glossary, /## 用語/);
 	assert.ok(result.lines.some((line) => line.includes('蓄積を初期化: cycle/, docs/')));
-	const again = runInit(dir, { product: true, origin: 'https://github.com/example/product' });
+	const again = runInit(dir, { product: true, apply: true, origin: 'https://github.com/example/product' });
 	assert.ok(again.lines.some((line) => line.includes('蓄積は既に空の周')));
 	assert.equal(stripLearnings(learnings), learnings);
 	assert.equal(readFileSync(join(dir, 'docs/GLOSSARY.md'), 'utf8'), glossary);
+});
+
+test('プロダクトの remote は --apply が無いと消さない', () => {
+	const dir = root();
+	put(dir, 'policy/canon.rego', 'package harness.canon\n');
+	put(dir, 'package.json', JSON.stringify({ name: 'marumo-cloud' }));
+	put(dir, 'cycle/events.jsonl', `${FRESH_EVENTS}{"type":"node_state"}\n`);
+	put(dir, 'cycle/packets/C-0024.json', '{}\n');
+	put(dir, 'docs/learnings.md', DIARY);
+	put(dir, 'docs/software-factory-survey.md', '調査\n');
+	const result = runInit(dir, {
+		product: true,
+		origin: 'https://github.com/example/product'
+	});
+	assert.equal(result.ok, true);
+	assert.match(readFileSync(join(dir, 'cycle/events.jsonl'), 'utf8'), /node_state/);
+	assert.equal(readFileSync(join(dir, 'cycle/packets/C-0024.json'), 'utf8'), '{}\n');
+	assert.match(readFileSync(join(dir, 'docs/learnings.md'), 'utf8'), /古い日記/);
+	assert.equal(readFileSync(join(dir, 'docs/software-factory-survey.md'), 'utf8'), '調査\n');
+	assert.ok(result.lines.some((line) => line.includes('削除は --apply が必要')));
+	assert.equal(result.reset.includes('cycle/packets/C-0024.json'), true);
 });
 
 test('プロダクトの remote は既にある用語集を空に戻さない', () => {
