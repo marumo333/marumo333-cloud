@@ -35,7 +35,7 @@ commit は hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（
    レビュー subagent は起動しない。人が明示した追加のモデル席は1回まで。
 4. 内省: 親が learnings に書く。reflector は起動しない。
 5. 機能ごとに ADR、レビュー、proposed、admitted は作らない。
-6. 人間が PR をマージすると次の cycle が開く。Feature 票は作らない。hooks から Task は起動しない。
+6. 人間が作業の PR をマージすると次の cycle が開く。枝が `cycle/` の記録用 PR では開かない。Feature 票は作らない。hooks から Task は起動しない。
 
 ## ロースター
 
