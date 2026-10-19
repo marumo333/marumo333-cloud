@@ -3,7 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertDispatchPolicy, countCanonPaths } from './lib/packet-policy.mjs';
+import { SEATS, assertDispatchPolicy, countCanonPaths } from './lib/packet-policy.mjs';
 
 const ROOT = process.env.HARNESS_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 const EVENTS = join(ROOT, 'cycle', 'events.jsonl');
@@ -17,7 +17,6 @@ function arg(name, fallback) {
 	return i >= 0 ? process.argv[i + 1] : fallback;
 }
 
-const SEATS = new Set(['grok', 'opus', 'fable', 'muse']);
 const EFFORTS = new Set(['medium', 'high']);
 const ESCALATES = new Set(['stay', 'trio', 'ceiling', 'human']);
 const SHA_RE = /^[a-f0-9]{64}$/;

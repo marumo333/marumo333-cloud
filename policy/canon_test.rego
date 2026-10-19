@@ -31,3 +31,23 @@ test_learnings_and_benchmarks_are_not_canon if {
 test_living_decisions_are_canon if {
 	canon.canon_path("docs/decisions/0016-definition-of-done.md")
 }
+
+test_scratch_logger_is_not_canon if {
+	not canon.canon_path(".cursor/log_subagent_model.mjs")
+}
+
+test_product_paths_are_outside_canon if {
+	not canon.canon_path("features/demo/requirements.md")
+	not canon.canon_path("src/main.ts")
+	not canon.canon_path("app/page.tsx")
+	canon.product_path("features/demo/requirements.md")
+	canon.product_path("src/main.ts")
+	canon.product_path("app/page.tsx")
+	not canon.product_path("scripts/feature-gate.mjs")
+	not canon.product_path("docs/learnings.md")
+}
+
+test_diff_keeps_product_paths if {
+	got := canon.product_paths with input as {"diff_paths": ["src/a.ts", "scripts/feature-gate.mjs", "features/x/requirements.md"]}
+	got == {"src/a.ts", "features/x/requirements.md"}
+}

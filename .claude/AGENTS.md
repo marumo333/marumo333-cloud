@@ -43,5 +43,5 @@ commit は hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（
 | --- | --- | --- |
 | `backend-architect` | ホストの既定。`model:` は置かない | 重ならないスライスの前の計画だけ |
 | `security-reviewer` | 起動しない。`model:` は置かない | 人が明示したとき 1回 |
-| `verifier` | 起動しない。`model:` は置かない | 親が feature-gate と pnpm test を実行する |
-| `reflector` | 起動しない。`model:` は置かない | 親が learnings に書く |
+| `verifier` | 定義ファイルは置かない | 親が feature-gate と pnpm test を実行する |
+| `reflector` | 定義ファイルは置かない | 親が learnings に書く |

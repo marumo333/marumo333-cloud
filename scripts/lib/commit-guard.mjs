@@ -16,10 +16,27 @@ export function bypassesHookInfra(command) {
 	return false;
 }
 
-export function decideCommitGuard(command) {
+export function quotedPayloads(command) {
+	const out = [];
+	const re = /\b(?:sh|bash|dash|zsh)\s+-c\s+(['"])([\s\S]*?)\1|\beval\s+(['"])([\s\S]*?)\3/g;
+	let match;
+	while ((match = re.exec(String(command ?? '')))) {
+		const payload = match[2] || match[4];
+		if (payload) out.push(payload);
+	}
+	return out;
+}
+
+export function decideCommitGuard(command, depth = 0) {
 	const cmd = String(command ?? '');
 	if (bypassesHookInfra(cmd)) {
 		return { action: 'deny', errors: ['[commit-guard] hook 基盤の無効化は禁止。'] };
+	}
+	if (depth < 3) {
+		for (const payload of quotedPayloads(cmd)) {
+			const inner = decideCommitGuard(payload, depth + 1);
+			if (inner.action === 'deny') return inner;
+		}
 	}
 	let needPrecommit = false;
 	const segs = isCodeModeCommand(cmd)

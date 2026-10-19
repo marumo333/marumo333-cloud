@@ -32,10 +32,11 @@ function tmpRoot() {
 	return root;
 }
 
-test('verify の役割は gate、Muse 第3は adversarial-review だけ', () => {
-	assert.equal(roleFor('skill:verify', 'opus'), 'gate');
-	assert.equal(roleFor('skill:adversarial-review', 'muse'), 'third');
-	assert.equal(roleFor('skill:harness-api-budget', 'opus'), 'parent');
+test('役割はノードで決まり、席の名前はモデルの族ではない', () => {
+	assert.equal(roleFor('skill:verify', 'parent'), 'gate');
+	assert.equal(roleFor('skill:adversarial-review', 'review'), 'review');
+	assert.equal(roleFor('skill:plan-confirm', 'plan'), 'gate');
+	assert.equal(roleFor('skill:harness-api-budget', 'parent'), 'parent');
 });
 
 test('sha256 不一致と欠落パケットは dispatch を拒否する', () => {
@@ -58,7 +59,7 @@ test('sha256 不一致と欠落パケットは dispatch を拒否する', () => 
 					cycle: 'C-0010',
 					node: 'skill:verify',
 					seq: 1,
-					seat: 'opus',
+					seat: 'parent',
 					escalate: 'trio',
 					sha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 				},
@@ -75,7 +76,7 @@ test('sha256 不一致と欠落パケットは dispatch を拒否する', () => 
 					cycle: 'C-0010',
 					node: 'skill:reflect',
 					seq: 1,
-					seat: 'opus',
+					seat: 'parent',
 					escalate: 'stay',
 					sha256: written.sha256
 				},
@@ -93,7 +94,7 @@ test('親と実装の effort 既定は high で medium は許容に残る', () =
 	assert.equal(effortAllowFor('implement')[0], 'high');
 });
 
-test('ゲートに Muse / stay / 下げ effort を同時に置くと deny', () => {
+test('モデル族の席と、canon 差分がある stay は deny', () => {
 	const root = tmpRoot();
 	const packet = buildPacket({
 		cycle: 'C-0010',
@@ -113,14 +114,14 @@ test('ゲートに Muse / stay / 下げ effort を同時に置くと deny', () =
 					cycle: 'C-0010',
 					node: 'skill:verify',
 					seq: 1,
-					seat: 'muse',
+					seat: 'grok',
 					effort: 'medium',
 					escalate: 'stay',
 					sha256: written.sha256
 				},
 				canon_path_count: 1
 			}),
-		/deny|Muse|stay|effort/
+		/deny|seat|stay|effort/
 	);
 });
 
@@ -139,7 +140,7 @@ test('導出 input は自己申告フラグを使わない', () => {
 			cycle: 'C-0010',
 			node: 'skill:verify',
 			seq: 1,
-			seat: 'muse',
+			seat: 'parent',
 			escalate: 'stay',
 			sha256: 'aa',
 			context_mode: 'isolated'
@@ -148,10 +149,10 @@ test('導出 input は自己申告フラグを使わない', () => {
 		canon_path_count: 2,
 		child_keys: []
 	});
-	assert.equal(input.trio_third, false);
+	assert.equal(input.trio_third, undefined);
+	assert.equal(input.role_swap_to_opus, undefined);
 	assert.deepEqual(input.effort_allow, ['high']);
-	assert.deepEqual(input.expected_seats, ['opus']);
-	assert.equal(input.role_swap_to_opus, false);
+	assert.deepEqual(input.expected_seats, ['parent']);
 });
 
 test('GIT_DIR を空リポに向けても件数は対象 root から数える', () => {

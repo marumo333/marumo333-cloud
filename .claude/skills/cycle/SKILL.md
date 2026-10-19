@@ -29,11 +29,11 @@ hooks から Task は起動しない。親が各 skill のあと（または Sto
 
 `node scripts/harness-query.mjs --cycle C-NNNN --node skill:harness-api-budget --context-mode packet --adr docs/decisions/0045-dispatch-context-packet.md`
 
-`node scripts/cycle-record.mjs --type dispatch --cycle C-NNNN --node skill:harness-api-budget --seq 1 --seat grok --escalate stay --sha256 <packetのsha256>`
+`node scripts/cycle-record.mjs --type dispatch --cycle C-NNNN --node skill:harness-api-budget --seq 1 --seat parent --escalate stay --sha256 <packetのsha256>`
 
 周の観測（`$` は書かない。`need_rerun` に足さない）:
 
-`node scripts/cycle-record.mjs --type token_ledger --cycle C-NNNN --seat grok --effort medium --packet-bytes N --tasks N --zero-value-reinject false`
+`node scripts/cycle-record.mjs --type token_ledger --cycle C-NNNN --seat parent --effort medium --packet-bytes N --tasks N --zero-value-reinject false`
 
 ## 集計
 

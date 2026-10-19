@@ -21,7 +21,7 @@ ok_dispatch := {
 	"cycle": "C-0010",
 	"node": "skill:verify",
 	"seq": 1,
-	"seat": "opus",
+	"seat": "parent",
 	"escalate": "stay",
 	"sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 	"context_mode": "isolated",
@@ -38,7 +38,7 @@ ok_input := {
 	"effort_default": "high",
 	"canon_path_count": 0,
 	"required_mode": "isolated",
-	"expected_seats": ["opus"],
+	"expected_seats": ["parent"],
 	"trio_third": false,
 	"ceiling_replaces_gate": false,
 	"role_swap_to_opus": false,
@@ -139,44 +139,20 @@ test_deny_ceiling_replaces_gate if {
 	})
 }
 
-test_deny_muse_outside_third if {
-	d := object.union(ok_dispatch, {"seat": "muse"})
-	count(canon.deny) > 0 with input as object.union(ok_input, {"dispatch": d, "trio_third": false})
-}
-
-test_allow_muse_as_third if {
-	d := object.union(ok_dispatch, {"seat": "muse", "escalate": "trio"})
-	count(canon.deny) == 0 with input as object.union(ok_input, {
-		"dispatch": d,
-		"trio_third": true,
-		"canon_path_count": 1,
-		"expected_seats": ["fable", "muse"],
-	})
-}
-
-test_deny_muse_stay if {
-	d := object.union(ok_dispatch, {"seat": "muse", "escalate": "stay"})
-	count(canon.deny) > 0 with input as object.union(ok_input, {
-		"dispatch": d,
-		"trio_third": true,
-		"expected_seats": ["fable", "muse"],
-	})
-}
-
-test_deny_verify_seat_grok if {
+test_deny_model_family_seat if {
 	d := object.union(ok_dispatch, {"seat": "grok"})
 	count(canon.deny) > 0 with input as object.union(ok_input, {"dispatch": d})
 }
 
-test_allow_review_grok_trio if {
-	d := object.union(ok_dispatch, {"node": "skill:adversarial-review", "seat": "grok", "escalate": "trio"})
+test_allow_review_seat if {
+	d := object.union(ok_dispatch, {"node": "skill:adversarial-review", "seat": "review", "escalate": "trio"})
 	p := object.union(ok_packet, {"node": "skill:adversarial-review"})
 	count(canon.deny) == 0 with input as object.union(ok_input, {
 		"packet": p,
 		"dispatch": d,
 		"canon_path_count": 1,
 		"required_mode": "isolated",
-		"expected_seats": ["fable", "grok", "muse"],
+		"expected_seats": ["review"],
 	})
 }
 
@@ -193,10 +169,6 @@ test_deny_whitespace_diff_stat if {
 test_deny_zwsp_diff_stat if {
 	p := object.union(ok_packet, {"feature": "", "diff_stat": "\u200b", "catalog_hits": [], "adr_paths": [], "metrics": {}})
 	count(canon.deny) > 0 with input as object.union(ok_input, {"packet": p})
-}
-
-test_deny_implement_to_opus if {
-	count(canon.deny) > 0 with input as object.union(ok_input, {"role_swap_to_opus": true})
 }
 
 test_deny_bad_schema if {

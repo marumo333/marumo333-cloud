@@ -16,7 +16,10 @@ test('機能ごとの ADR と proposed と admitted を作る手順が残って�
 	assert.match(merge, /Feature は起票しない/);
 	const workflow = readFileSync(join(ROOT, '.github/workflows/harness-cycle.yml'), 'utf8');
 	assert.doesNotMatch(workflow, /knowledge\/features/);
-	assert.doesNotMatch(workflow, /gh pr create/);
+	assert.doesNotMatch(workflow, /git push origin HEAD:/);
+	assert.match(workflow, /gh pr create/);
+	assert.match(workflow, /cycle\/events\.jsonl/);
+	assert.match(workflow, /main へは直接 push しない/);
 	assert.equal(existsSync(join(ROOT, 'knowledge')), false);
 	assert.equal(existsSync(join(ROOT, 'docs/superpowers')), false);
 	assert.equal(existsSync(join(ROOT, 'policy/grow.rego')), false);

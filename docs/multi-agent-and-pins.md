@@ -18,7 +18,7 @@ flowchart TB
     gate["packet の席トークン、review-cap の件数、effort の幅"]
   end
   subgraph dead["起動しない席"]
-    agent["verifier / reflector に model は置かない"]
+    agent["検証と内省の定義ファイルは置かない"]
   end
   yaml --> parent
   yaml --> task
@@ -29,20 +29,20 @@ flowchart TB
 届くもの:
 
 - 役割と effort。書く場所は yaml。ゲートはホストのモデル ID を受け取らない。
-- dispatch を書いたときの席トークン（`policy/packet.rego` の `seats`）、新しい周の件数（`scripts/lib/review-cap.mjs`）、effort の幅（`scripts/lib/packet-policy.mjs`）。製品スラッグはここには書かない。
-- 席トークン `grok` / `fable` / `opus` / `muse` は入場語彙である。ホストのカタログではない。
+- dispatch を書いたときの席（`parent` / `implement` / `plan` / `review`）、新しい周の件数（`scripts/lib/review-cap.mjs`）、effort の幅（`scripts/lib/packet-policy.mjs`）。製品スラッグはここには書かない。
+- 席の名前は役割だけである。モデルの族名は入場語彙にしない。
 
 置かないもの:
 
-- どの agent の `model:` も置かない。本文が起動禁止でも、frontmatter のスラッグは起動されたときの既定になる。
+- どの agent の `model:` も置かない。検証と内省の定義ファイルは置かない。手順は skill にあり、起動しない。
 - 席の無いスラッグ。`sonnet_pin` は参照する skill が無かったので yaml から外した。`fable_pin` と `grok_task` も、ホストを Cursor に固定するので外した。
 - ゲートの deny の中の製品スラッグ。ランナーが渡した文字列を、このリポジトリは解決しない。
 
-`dispatch_seats` の `verify: opus` や `muse` は、世代のピンではない。記録してよい席トークンが残っている、という別の問題である。yaml は実行時にパースされない。実行される写しは `scripts/lib/packet-policy.mjs` の `SEATS_BY_NODE` と `packet.rego` の `seats` と `scripts/cycle-record.mjs` の `SEATS` である。この変更では席の集合は削らない。
+`dispatch_seats` は `parent` / `implement` / `plan` / `review` だけを書く。yaml は実行時にパースされない。実行される写しは `scripts/lib/packet-policy.mjs` の `SEATS` と `packet.rego` の `seats` と `scripts/cycle-record.mjs` である。この3つは同じ役割名にする。
 
 ## クラウドも手元も質問しない
 
-commit hook はホストを聞かない。Cursor の hook も聞かない。git hook は commit で走り、`hooksPath` は `pnpm install` の `prepare` が書く。その install はクラウドでも手元でも CI でも走る。クラウドの起動は git clone のあと、プロダクトの remote なら `cycle/` と `docs/` を空の周に戻す。`cycle` の正本 yaml と `docs/decisions/` は残す。`docs/GLOSSARY.md` は無いときだけ空の見出しを作り、あるときは残す。このテンプレートの remote では消さない。プロバイダとモデルは聞かない。実行モデルはホストの既定。共有の yaml には書かない。
+commit hook はホストを聞かない。Cursor の hook も聞かない。git hook は commit で走り、`hooksPath` は `pnpm install` の `prepare` が書く。その install はクラウドでも手元でも CI でも走る。クラウドの起動は git clone のあと `node scripts/init.mjs --product` を呼ぶ。これは計画だけを出す。プロダクトの remote で `cycle/` と `docs/` を空の周に戻すのは `--product --apply` のときだけである。`cycle` の正本 yaml と `docs/decisions/` は残す。`docs/GLOSSARY.md` は無いときだけ空の見出しを作り、あるときは残す。このテンプレートの remote では消さない。プロバイダとモデルは聞かない。実行モデルはホストの既定。共有の yaml には書かない。
 
 各ホストは自分の入口を読む。Cursor は `.cursor/hooks.json` とルートの `AGENTS.md`、Claude Code はルートの `AGENTS.md` と `.claude/AGENTS.md` と `.claude/settings.json`、Codex はルートの `AGENTS.md` と `.codex/hooks.json`。`CLAUDE.md` は置かない。置くと既定の Claude は `AGENTS.md` を読まなくなる。スキルは `.claude/skills` にあり、Codex は `.agents/skills` から同じディレクトリを読む。共有のゲートは `host-default` のままである。ホスト名を yaml に書いてモデル ID を割り当てない。図は [`docs/architecture/host-entry-as-is-to-be.mmd`](architecture/host-entry-as-is-to-be.mmd)。
 

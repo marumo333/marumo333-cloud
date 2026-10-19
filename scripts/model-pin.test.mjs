@@ -17,7 +17,7 @@ function frontmatter(rel) {
 	return text.slice(0, end);
 }
 
-/** ホストのモデル ID。packet の席トークン（grok / fable / opus / muse）は含めない。 */
+/** ホストのモデル ID。席の役割名は含めない。 */
 const PRODUCT_SLUG = /grok-\d|claude-[a-z0-9]|gpt-\d|gemini-|muse-spark-|cursor-grok|Grok \d|Fable \d|Opus \d/;
 
 const LIVING = [
@@ -34,8 +34,6 @@ const LIVING = [
 	'.claude/skills/harness-audit/SKILL.md',
 	'.claude/agents/backend-architect.md',
 	'.claude/agents/security-reviewer.md',
-	'.claude/agents/verifier.md',
-	'.claude/agents/reflector.md',
 	'docs/architecture/review-overview.mmd',
 	'docs/architecture/runtime-overview.mmd',
 	'docs/architecture/audit-overview.mmd',
@@ -44,22 +42,25 @@ const LIVING = [
 
 test('どの agent の frontmatter にも model を置かない', () => {
 	const agents = readdirSync(join(ROOT, '.claude/agents')).filter((name) => name.endsWith('.md'));
-	assert.ok(agents.length >= 4);
+	assert.deepEqual(agents.sort(), ['backend-architect.md', 'security-reviewer.md']);
 	for (const name of agents) {
 		assert.doesNotMatch(frontmatter(`.claude/agents/${name}`), /^model:/m, name);
 	}
-	for (const rel of ['.claude/agents/verifier.md', '.claude/agents/reflector.md']) {
-		assert.match(read(rel), /起動しない/);
-	}
+	assert.equal(existsSync(join(ROOT, '.claude/agents/verifier.md')), false);
+	assert.equal(existsSync(join(ROOT, '.claude/agents/reflector.md')), false);
+	assert.equal(existsSync(join(ROOT, '.cursor/log_subagent_model.mjs')), false);
+	assert.match(read('.claude/skills/verify/SKILL.md'), /起動しない/);
+	assert.match(read('.claude/skills/reflect/SKILL.md'), /起動しない/);
 });
 
-test('生きた契約に製品スラッグを書かず、席トークンは残す', () => {
+test('生きた契約に製品スラッグを書かず、席は役割だけ', () => {
 	for (const rel of LIVING) {
 		assert.doesNotMatch(read(rel), PRODUCT_SLUG, rel);
 	}
 	const routing = read('cycle/model-routing.yaml');
 	assert.match(routing, /host-default/);
-	assert.match(routing, /parent: grok/);
+	assert.match(routing, /parent: parent/);
+	assert.doesNotMatch(routing, /\b(grok|fable|opus|muse)\b/);
 	assert.doesNotMatch(routing, /fable_pin/);
 	assert.doesNotMatch(routing, /sonnet_pin/);
 	assert.doesNotMatch(routing, /grok_task:/);
@@ -143,6 +144,7 @@ test('Cursor と Claude Code と Codex は同じ契約の入口を持つ', () =>
 	const cloud = JSON.parse(read('.cursor/environment.json'));
 	assert.match(cloud.install, /pnpm install --frozen-lockfile/);
 	assert.match(cloud.install, /init\.mjs --product/);
+	assert.doesNotMatch(cloud.install, /--apply/);
 	assert.doesNotMatch(cloud.install, /setup-host/);
 	assert.match(read('AGENTS.md'), /\.cursor\/environment\.json/);
 	const readme = read('README.md');

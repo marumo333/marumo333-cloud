@@ -182,7 +182,7 @@ function pruneEmpty(dir, stop) {
 	if (dir !== stop && readdirSync(dir).length === 0) rmSync(dir, { recursive: true });
 }
 
-function resetAccumulation(root) {
+function resetAccumulation(root, apply) {
 	/** @type {string[]} */
 	const touched = [];
 	const cycleDir = join(root, 'cycle');
@@ -191,16 +191,16 @@ function resetAccumulation(root) {
 			const rel = relPath(root, abs);
 			const inside = rel.slice('cycle/'.length);
 			if (inside === 'packets/.gitkeep' || CYCLE_KEEP.has(inside)) continue;
-			rmSync(abs);
+			if (apply) rmSync(abs);
 			touched.push(rel);
 		}
-		pruneEmpty(cycleDir, cycleDir);
+		if (apply) pruneEmpty(cycleDir, cycleDir);
 		const eventsPath = join(cycleDir, 'events.jsonl');
 		if (!existsSync(eventsPath)) {
-			writeFileSync(eventsPath, FRESH_EVENTS);
+			if (apply) writeFileSync(eventsPath, FRESH_EVENTS);
 			touched.push('cycle/events.jsonl');
 		} else if (readFileSync(eventsPath, 'utf8') !== FRESH_EVENTS) {
-			writeFileSync(eventsPath, FRESH_EVENTS);
+			if (apply) writeFileSync(eventsPath, FRESH_EVENTS);
 			touched.push('cycle/events.jsonl');
 		}
 	}
@@ -210,33 +210,36 @@ function resetAccumulation(root) {
 			const rel = relPath(root, abs);
 			const inside = rel.slice('docs/'.length);
 			if (inside.startsWith('decisions/') || DOCS_KEEP.has(inside)) continue;
-			rmSync(abs);
+			if (apply) rmSync(abs);
 			touched.push(rel);
 		}
-		pruneEmpty(docsDir, docsDir);
+		if (apply) pruneEmpty(docsDir, docsDir);
 		const learnPath = join(docsDir, 'learnings.md');
 		if (existsSync(learnPath)) {
 			const current = readFileSync(learnPath, 'utf8');
 			const next = stripLearnings(current);
 			if (next !== current) {
-				writeFileSync(learnPath, next);
+				if (apply) writeFileSync(learnPath, next);
 				touched.push('docs/learnings.md');
 			}
 		}
 	}
 	const glossary = join(root, 'docs/GLOSSARY.md');
 	if (!existsSync(glossary)) {
-		mkdirSync(dirname(glossary), { recursive: true });
-		writeFileSync(glossary, SCAFFOLD['docs/GLOSSARY.md']);
+		if (apply) {
+			mkdirSync(dirname(glossary), { recursive: true });
+			writeFileSync(glossary, SCAFFOLD['docs/GLOSSARY.md']);
+		}
 		touched.push('docs/GLOSSARY.md');
 	}
 	return touched;
 }
 
-function accumulationLines(reset, touched) {
+function accumulationLines(reset, touched, apply) {
 	if (!reset) return ['[init] テンプレートの蓄積は残す'];
 	const folders = [...new Set(touched.map((path) => (path.startsWith('cycle/') ? 'cycle/' : path.startsWith('docs/') ? 'docs/' : path)))].sort();
 	if (folders.length === 0) return ['[init] 蓄積は既に空の周'];
+	if (!apply) return [`[init] 削除は --apply が必要: ${folders.join(', ')}`];
 	return [`[init] 蓄積を初期化: ${folders.join(', ')}`];
 }
 
@@ -275,10 +278,11 @@ export function runInit(root, opts = {}) {
 	const spawn = opts.spawn ?? defaultSpawn;
 	const plan = planInit(root);
 	const product = opts.product === true;
+	const apply = opts.apply === true;
 	const origin = product ? (opts.origin === undefined ? readOrigin(root) : opts.origin) : '';
 	const reset = shouldResetAccumulation({ product, origin, harness: plan.kind === 'harness' });
-	const touched = reset ? resetAccumulation(root) : [];
-	const extra = product ? accumulationLines(reset, touched) : [];
+	const touched = reset ? resetAccumulation(root, apply) : [];
+	const extra = product ? accumulationLines(reset, touched, apply) : [];
 	if (plan.kind === 'harness') {
 		return { ok: true, lines: [...linesFor(plan, [], false), ...extra], created: [], copied: false, reset: touched };
 	}
@@ -315,7 +319,10 @@ function main() {
 		process.exit(1);
 	}
 	const root = resolve(cwdArg || process.cwd());
-	const result = runInit(root, { product: process.argv.includes('--product') });
+	const result = runInit(root, {
+		product: process.argv.includes('--product'),
+		apply: process.argv.includes('--apply')
+	});
 	for (const line of result.lines) console.log(line);
 	process.exit(result.ok ? 0 : 1);
 }

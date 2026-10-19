@@ -6,13 +6,15 @@
 ## 空リポへ載せる
 
 ```bash
-git clone https://github.com/marumo333/cursor-harness.git
-cd cursor-harness
+git clone https://github.com/marumo333/marumo333-cloud.git
+cd marumo333-cloud
 corepack enable
 # リモートを新しい空リポに向ける
 git remote set-url origin https://github.com/<you>/<new-repo>.git
 git push -u origin main
 ```
+
+旧名 `cursor-harness` の remote も、このテンプレートとして扱う。
 
 人間が GitHub で初期コミットを確認する。以降の改善は feature ブランチ → PR → マージ。
 
@@ -30,11 +32,13 @@ clone の次に、この順で叩く。
 
 ```bash
 node scripts/init.mjs
+node scripts/init.mjs --product
+node scripts/init.mjs --product --apply
 node scripts/start-feature.mjs <slug>
 node scripts/check-behavior.mjs
 ```
 
-`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` がこのファイルを、無いときだけ作り、あるときは残す。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられているときだけ成功する。二度目は既存ファイルを上書きしない。
+`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` が消す予定を出すだけで、ファイルは残す。`--product --apply` が `cycle/` と決定以外の `docs/` を空の周に戻し、この用語集は無いときだけ作り、あるときは残す。テンプレートの remote では消さない。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられているときだけ成功する。二度目は既存ファイルを上書きしない。
 
 ## 1周
 

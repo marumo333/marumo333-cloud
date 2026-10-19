@@ -1,13 +1,12 @@
-# ハーネス席 — ADR 0031 / 0033 / 0037 / 0039 / 0040 / 0046 / 0047 / 0049
-# 実行モデルはホストの既定。製品スラッグは書かない。
-# ゲートの席トークン（grok / fable / opus / muse）は入場語彙であり、ホストのカタログではない。
+# ハーネス席 — ADR 0031 / 0033 / 0037 / 0039 / 0049
+# 実行モデルはホストの既定。製品スラッグは書かない。席の名前は役割だけ。
 # 第3の effort は medium。high には上げない。
-# 検証用 subagent は起動しない（[[0051]]）。opus_gates と review_trio は空。
+# 検証用 subagent は起動しない（[[0051]]）。追加ゲートと review_trio は空。
 harness_agents:
   model: host-default
-  fable_gates:
+  plan_gates:
     - plan-confirm
-  opus_gates: []
+  extra_gates: []
   review_trio: []
   budget_guards:
     parent_chat: host-default
@@ -15,11 +14,11 @@ harness_agents:
     third_lens_seat: none
     no_named_model: true
     extra_seat: human-requested-once
-    opus_seat: do-not-dispatch
+    implement_seat: host-default
     trio_when: never
     plan_confirm_when: before-fanout-only
     no_generic_task_as_gate: true
-    no_fable_opus_cohabit_trio: true
+    no_mixed_review_trio: true
     product_slug_required: false
 # 親と実装の既定 effort は high（[[0049]]）。medium は許可に残し、ピンにはしない。
 # 幅1の上書きは packet.rego が deny。ゲートを親が下げることも不可。
@@ -51,15 +50,8 @@ context_mode:
   - isolated
   - packet
 dispatch_seats:
-  parent: grok
-  implement: grok
-  plan_confirm: fable
-  review: fable
-  review_trio:
-    - fable
-    - grok
-    - muse
-  verify: opus
-  reflect: opus
-  third: muse
-  harness_grow: fable
+  parent: parent
+  implement: implement
+  plan_confirm: plan
+  review: review
+  review_trio: []

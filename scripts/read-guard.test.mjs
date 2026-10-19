@@ -66,6 +66,35 @@ test('Claude と Codex の PreToolUse は exit 2 で止め、Cursor の JSON を
 	assert.doesNotMatch(r.stdout, /"permission"/);
 });
 
+test('壊れた hook 入力は拒否し、典型以外の .env 読みは止めない', () => {
+	const hook = join(ROOT, '.claude/hooks/block_env_read.mjs');
+	const broken = spawnSync(process.execPath, [hook], { input: '{', encoding: 'utf8' });
+	assert.equal(broken.status, 2);
+	assert.match(broken.stderr, /壊れている/);
+	for (const command of ['grep . .env', 'awk 1 .env', 'python3 -c "open(\'.env\')"', 'cp .env x.txt']) {
+		const r = spawnSync(process.execPath, [hook], {
+			input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_input: { command } }),
+			encoding: 'utf8'
+		});
+		assert.equal(r.status, 0, command);
+	}
+});
+
+test('秘密の書き込みは src 以外も止める', () => {
+	const hook = join(ROOT, '.claude/hooks/block_secret_write.mjs');
+	const value = 'sk-' + 'a'.repeat(20);
+	const r = spawnSync(process.execPath, [hook], {
+		input: JSON.stringify({
+			tool_input: { file_path: 'app/server.js', content: `const key = "${value}";` }
+		}),
+		encoding: 'utf8'
+	});
+	assert.equal(r.status, 2);
+	assert.match(r.stderr, /規約1/);
+	const broken = spawnSync(process.execPath, [hook], { input: '{', encoding: 'utf8' });
+	assert.equal(broken.status, 2);
+});
+
 test('search-lines は一致行を返す', () => {
 	const r = spawnSync(process.execPath, ['scripts/search-lines.mjs', 'export const PACKET_MAX_BYTES = 32768;'], {
 		cwd: ROOT,

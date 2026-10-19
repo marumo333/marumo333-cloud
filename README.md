@@ -6,7 +6,16 @@ Cursor、Claude Code、Codex で同じ契約を使う**テンプレート**。�
 ## 実行環境
 
 開発は Cursor、Claude Code、Codex。ゲート（`feature-gate` / OPA）は Linux amd64 の CI と、各ホストの commit 前 hook で通す。macOS / Windows / Linux arm64 ではゲートは動かない。
+`.agents/skills` は `.claude/skills` へのシンボリックリンクである。Windows では開発者モードが無いと辿れない。
 手元の clone は閲覧と空リポへの載せに使う。commit とゲートはクラウドまたは Actions で通す。
+
+## ガードの限界
+
+秘密の読み取りガードが止めるのは、ファイルを直接開く読みと、`cat` / `head` / `tail` / `less` / `more` / `source` / `printenv` だけである。`grep`、`awk`、`python` の open、`cp` は止まらない。拒否リストを足しても、シェルの書き方は残る。Claude Code は `.claude/settings.json` の `permissions.deny` が `Read(./.env)` を止める。確実に守ることは、秘密をリポジトリへ置かないことである。
+
+commit ガードは `--no-verify` と `-n` に加え、`sh -c` と `eval` の中、フラグ位置のコマンド置換を拒否する。壊れた hook 入力は許可に倒さず拒否する。完全なシェル解析ではない。
+
+秘密の書き込みは、パスが `src` であるかに依存しない。Codex の編集が `apply_patch` のとき、`.codex/hooks.json` の matcher にその名前を含める。ホストが別名を出す場合は、このガードには届かない。
 
 ## 何をするか
 
@@ -42,13 +51,19 @@ Cursor、Claude Code、Codex で同じ契約を使う**テンプレート**。�
 このハーネスは席・ゲート・cycle で回る。入力は人間の依頼と `features/<slug>/` の振る舞い、
 実行は席、token効率化は code-mode と packet、品質ゲートは hooks / OPA / feature-gate、
 成果は振る舞いのテストと `docs/decisions/` と policy、フィードバックは次の cycle である。
-監査の主体は親である。モデル ID は指定しない。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧は opa test が検査し、差分の被覆には使わない。正本へは書かない。
+監査の主体は親である。モデル ID は指定しない。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧はハーネスの正本で、差分がそこを含むと stay を拒否する。被覆率にはしない。`features/` と `src/` と `app/` の差分は、振る舞いと `tsc --noEmit` を見る。正本へは書かない。
 
 図は [`docs/architecture/`](docs/architecture/) のアーキテクチャ概要。実線は実行、破線は条件付きか判定のみ。編集する正は同ディレクトリの mermaid（[`review-overview.mmd`](docs/architecture/review-overview.mmd) ほか）。README には画像だけを出す。
 
 ### 入口
 
-as-is は契約が製品スラッグを名指し、動く入口は Cursor だけだった。to-be は、クラウドの起動が git clone のあと初期化する。初期化は、プロダクトの remote なら `cycle/` と `docs/` を空の周に戻す。`cycle/events.jsonl` は空の `C-0001` になり、正本の yaml は残る。`docs/` は日付付きの日記と、決定以外の調査や図を落とす。`docs/decisions/` は残す。このテンプレートの remote では消さない。依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。三つの入口は同じ `AGENTS.md` を読む。実行はホストの既定。答えは共有の yaml には書かない。
+以前は、契約が特定のモデル名を書き、動く入口は Cursor だけだった。いまは、クラウドの起動が git clone のあと初期化する。
+
+初期化のコマンドは `node scripts/init.mjs --product` である。これは消すファイルの一覧を出すだけで、ファイルは残す。プロダクトの remote で実際に戻すのは `node scripts/init.mjs --product --apply` だけである。そのとき `cycle/events.jsonl` は空の `C-0001` になり、正本の yaml は残る。`docs/` は日付付きの日記と、決定以外の調査や図を落とす。`docs/decisions/` は残す。このテンプレートの remote では消さない。フォークしただけでは消えない。
+
+依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。三つの入口は同じ `AGENTS.md` を読む。実行はホストの既定。答えは共有の yaml には書かない。
+
+モデルとレビューのあと、人間がマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。
 
 ![入口の as-is と to-be](docs/architecture/host-entry-as-is-to-be.gif)
 
@@ -80,7 +95,7 @@ hooks を踏むのは実装の commit。feature-gate は判定であり正本へ
 
 ### 再起的自己改善
 
-人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
+人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。記録の commit は PR にする。main へは直接 push しない。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
 
 ![再起的自己改善](docs/architecture/self-improve-flow.gif)
 
