@@ -34,12 +34,24 @@ export function computeMetrics(required, cycle) {
 	const edge_skip_rate = edges.length === 0 ? 0 : edgeSkipped / edges.length;
 	const state_integrity = nodes.length === 0 ? 1 : nodeTerminal / nodes.length;
 	const has_failed = nodeFailed > 0 || edgeFailed > 0;
+	let strictNodes = 0;
+	for (const n of nodes) {
+		const st = nodeStates[n.id];
+		if (st === 'used' || st === 'approved') strictNodes += 1;
+	}
+	let strictEdges = 0;
+	for (const e of edges) {
+		const st = edgeStates[`${e.from}>${e.to}`];
+		if (st === 'taken' || st === 'approved') strictEdges += 1;
+	}
+	const strict = strictNodes === nodes.length && strictEdges === edges.length && !has_failed ? 1 : 0;
 
 	return {
 		node_skip_rate,
 		edge_skip_rate,
 		state_integrity,
 		has_failed,
+		strict,
 		human_approved: cycle.human_approved === true,
 		degraded: node_skip_rate > 0 || edge_skip_rate > 0 || has_failed || state_integrity < 1
 	};

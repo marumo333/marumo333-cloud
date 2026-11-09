@@ -16,6 +16,7 @@ test('全部省略なら指標は落ちる。票は作らない', () => {
 	assert.equal(m.node_skip_rate, 1);
 	assert.equal(m.edge_skip_rate, required.edges.length === 0 ? 0 : 1);
 	assert.equal(m.state_integrity, 1);
+	assert.equal(m.strict, 0);
 	assert.equal(m.degraded, true);
 });
 
@@ -28,6 +29,7 @@ test('全部使用なら緑', () => {
 	assert.equal(m.edge_skip_rate, 0);
 	assert.equal(m.state_integrity, 1);
 	assert.equal(m.has_failed, false);
+	assert.equal(m.strict, 1);
 	assert.equal(m.degraded, false);
 });
 
@@ -37,6 +39,7 @@ test('全部失敗は緑ではない', () => {
 		edges: Object.fromEntries(required.edges.map((e) => [`${e.from}>${e.to}`, 'failed']))
 	});
 	assert.equal(m.has_failed, true);
+	assert.equal(m.strict, 0);
 	assert.equal(m.node_skip_rate, 0);
 	assert.equal(m.degraded, true);
 });
@@ -44,6 +47,7 @@ test('全部失敗は緑ではない', () => {
 test('状態欠落は完全性を下げる', () => {
 	const m = computeMetrics(required, { nodes: { 'skill:verify': 'used' }, edges: {} });
 	assert.ok(m.state_integrity < 1);
+	assert.equal(m.strict, 0);
 	assert.equal(m.degraded, true);
 });
 
@@ -144,6 +148,22 @@ test('token_ledger は need_rerun 相当の3指標を変えない', () => {
 	];
 	const m = computeMetrics(required, foldCycle(events, 'C-0010'));
 	assert.equal(m.degraded, false);
+	assert.equal(m.strict, 1);
 	assert.equal(m.has_failed, false);
 	assert.equal(m.node_skip_rate, 0);
+});
+
+test('辺が省略なら記録が揃っていても完了ではない', () => {
+	const m = computeMetrics(
+		{
+			nodes: [{ id: 'skill:harness-api-budget' }],
+			edges: [{ from: 'skill:harness-api-budget', to: 'skill:harness-api-budget' }]
+		},
+		{
+			nodes: { 'skill:harness-api-budget': 'used' },
+			edges: { 'skill:harness-api-budget>skill:harness-api-budget': 'skipped' }
+		}
+	);
+	assert.equal(m.state_integrity, 1);
+	assert.equal(m.strict, 0);
 });

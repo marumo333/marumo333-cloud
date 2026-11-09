@@ -41,6 +41,7 @@ hooks から Task は起動しない。親が各 skill のあと（または Sto
 
 `degraded=true` は指標が落ちた印である。Feature 票は作らない。reflector は起動しない。
 token_ledger は観測項だけ。3指標には入れない。
+`strict` は 0 か 1。必須ノードが used か approved で、必須の辺が taken か approved で、失敗が無いときだけ 1。`state_integrity` は記録が揃ったこと。省略だけの周は integrity が 1 でも strict は 0。再起の入場には使わない。3指標は変えない。
 
 ## 再起
 

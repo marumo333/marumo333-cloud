@@ -3,6 +3,64 @@ import { existsSync, lstatSync, mkdirSync, realpathSync, writeFileSync } from 'n
 import { dirname, join, relative } from 'node:path';
 
 export const PACKET_MAX_BYTES = 32768;
+const HANDOFF_KEYS = ['learnings', 'conversation', 'decisions', 'session'];
+const HANDOFF_RE = new RegExp(
+	`(?:^|[\\s{,\\[])["']?(${HANDOFF_KEYS.join('|')})["']?\\s*:\\s*([^\\n]*)`,
+	'gi'
+);
+const DIARY_CHARS = 160;
+
+export function isProcedurePath(rel) {
+	const p = String(rel ?? '').replaceAll('\\', '/');
+	if (p === 'AGENTS.md' || p === '.claude/AGENTS.md' || p === 'TEMPLATE.md') return true;
+	return /^\.(?:claude|agents)\/skills\/.+\.md$/.test(p);
+}
+
+export function addedDiffText(diff) {
+	const out = [];
+	for (const line of String(diff ?? '').split('\n')) {
+		if (line.startsWith('+++') || line.startsWith('---')) continue;
+		if (line.startsWith('+')) out.push(line.slice(1));
+	}
+	return out.join('\n');
+}
+
+function emptyHandoff(value) {
+	const trimmed = String(value ?? '').trim().replace(/,$/, '').trim();
+	if (trimmed === '|' || trimmed === '>' || trimmed.startsWith('|') || trimmed.startsWith('>')) return false;
+	let inner = trimmed;
+	if (
+		(inner.startsWith('"') && inner.endsWith('"') && inner.length >= 2) ||
+		(inner.startsWith("'") && inner.endsWith("'") && inner.length >= 2)
+	) {
+		inner = inner.slice(1, -1);
+	}
+	return inner === '' || inner === 'null' || inner === '[]' || inner === '{}' || inner === '~';
+}
+
+function repeatsDiary(added, diary, minChars) {
+	const a = String(added ?? '').replace(/\s+/g, ' ');
+	const d = String(diary ?? '').replace(/\s+/g, ' ');
+	if (a.length < minChars || d.length < minChars) return false;
+	const gram = new Set();
+	for (let i = 0; i + minChars <= d.length; i += 1) gram.add(d.slice(i, i + minChars));
+	for (let i = 0; i + minChars <= a.length; i += 1) {
+		if (gram.has(a.slice(i, i + minChars))) return true;
+	}
+	return false;
+}
+
+/** 手順へ残った私的な引き渡し。値の無いキー名と短い引用は対象にしない。 */
+export function procedureLeak(added, diary, minChars = DIARY_CHARS) {
+	const keys = new Set();
+	HANDOFF_RE.lastIndex = 0;
+	for (const match of String(added ?? '').matchAll(HANDOFF_RE)) {
+		if (emptyHandoff(match[2])) continue;
+		keys.add(match[1].toLowerCase());
+	}
+	return { keys: [...keys].sort(), diary: repeatsDiary(added, diary, minChars) };
+}
+
 export const FORBIDDEN_KEYS = new Set([
 	'learnings',
 	'conversation',
