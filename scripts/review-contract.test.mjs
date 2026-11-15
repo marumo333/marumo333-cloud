@@ -82,6 +82,21 @@ test('セキュリティ・振る舞い・設計は1回の読みに含め、観�
 	assert.match(budget, /3体のレビューは起動しない/);
 });
 
+test('画面の差分は親が実行し、追加のレビュー席は毎タスクでは起動しない', () => {
+	const canon = read('.claude/AGENTS.md');
+	assert.match(canon, /cycle\/runtime-verify\.jsonl/);
+	assert.match(canon, /code-review と security-reviewer は毎タスクでは起動しない/);
+	assert.match(canon, /レビュー subagent は起動しない/);
+	assert.match(canon, /Claude Code/);
+	assert.match(canon, /Codex/);
+	assert.doesNotMatch(canon, /Cursor 専用/);
+	assert.match(read('.claude/skills/verify/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
+	assert.match(read('.claude/skills/verify/SKILL.md'), /code-review と security-reviewer は起動しない/);
+	assert.match(read('.claude/skills/adversarial-review/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
+	assert.match(read('docs/GLOSSARY.md'), /\| 画面検証 \|/);
+	assert.match(read('AGENTS.md'), /この環境の画面で操作/);
+});
+
 test('機械ゲートと親の3観点は人が頼まなくても走り、追加席だけが人を待つ', () => {
 	const skill = read('.claude/skills/adversarial-review/SKILL.md');
 	assert.match(skill, /人がレビューを頼まなくても/);

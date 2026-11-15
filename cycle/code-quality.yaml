@@ -30,6 +30,7 @@ definition_of_done:
   - tdd_red_evidence_or_exception
   - secret_scan_pass
   - review_pass # 親が1回、直す・検討・記録・却下。直すだけコードを変え、tsc --noEmit が緑なら止める。二周目は開かない
+  - screen_artifact # 画面差分は cycle/runtime-verify.jsonl の実在するスクリーンショットか録画。code-review と security-reviewer は毎タスクでは起動しない
   - plan_confirm_if_fanout
   - learnings_appended
   - cycle_skills_recorded # 必須 skill の used/skipped（ADR 0039）

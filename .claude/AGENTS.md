@@ -15,7 +15,7 @@
 
 | 席 | モデル | 役割 |
 | --- | --- | --- |
-| 親チャット | ホストの既定 | 壁打ち・重なるファイルの実装・契約とゲートの実行・内省・cycle 記録 |
+| 親チャット | ホストの既定 | 壁打ち・重なるファイルの実装・契約とゲートの実行・画面の操作・内省・cycle 記録 |
 | 計画 | ホストの既定 | 重ならないスライスの前の plan-confirm だけ |
 | 検証 / 内省 | 親が実行 | verifier と reflector は起動しない |
 
@@ -30,9 +30,11 @@ commit は hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（
    learnings 全文と decisions 全件を1周で再読しない。
    brainstorming / writing-plans。重ならないスライスの前は plan-confirm。
 2. 実装: TDD。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。モデル ID は指定しない。
-3. 検証: 型の正解は `tsc --noEmit`（[[0051]]）。親が1回、指摘を直す・検討・記録・却下に分ける。
+3. 検証: 先に決定的な検査。型の正解は `tsc --noEmit`（[[0051]]）。契約と `node scripts/feature-gate.mjs` と、テストがある変更の `pnpm test`。
+   そのあと親が差分を実行する。画面（`app/` `src/` `public/` の tsx / jsx / vue / svelte / css / html）は、親が操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。行には各画面ファイルの sha256 を書く。中身が変わった古い行は覆わない。実在するファイルが無いと feature-gate が失敗する。コマンド（scripts / policy / contracts / features / それ以外の src と app）は、その終了コードが結果である。散文は画面を撮らない。
+   実行のあと、親が1回、セキュリティ・振る舞い・設計を読む。指摘は直す・検討・記録・却下に分ける。
    コードを変えるのは直すだけ。そのあと noEmit が緑なら止める。二周目は開かない。
-   レビュー subagent は起動しない。人が明示した追加のモデル席は1回まで。
+   レビュー subagent は起動しない。code-review と security-reviewer は毎タスクでは起動しない。人が明示した追加のモデル席は1回まで。モデル ID は指定しない。
 4. 内省: 親が learnings に書く。reflector は起動しない。
 5. 機能ごとに ADR、レビュー、proposed、admitted は作らない。
 6. 人間が作業の PR をマージすると次の cycle が開く。枝が `cycle/` の記録用 PR では開かない。Feature 票は作らない。hooks から Task は起動しない。

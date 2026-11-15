@@ -24,6 +24,7 @@ Node.js 製のガバナンスハーネス。npm 依存パッケージは無い�
 - 自動テスト: `pnpm test`（`node --test`）。
 - ポリシー lint / test（OPA のみ）: `node scripts/feature-gate.mjs --test`。
 - 正本ゲート本体（build/run 相当）: `node scripts/feature-gate.mjs`。ハーネスは `policy/canon.rego`。差分の `features/` `src/` `app/` は振る舞いのテストと `tsc --noEmit`。Feature 票は作らない。
+- 画面の差分（`app/` `src/` `public/` の tsx / jsx / vue / svelte / css / html）は、親がこの環境の画面で操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。行には各画面ファイルの sha256 を書く。実在するファイルが無い、または中身が変わった古い行では、`node scripts/feature-gate.mjs` が失敗する。コマンドの差分は、その終了コードが結果である。散文は画面を撮らない。code-review と security-reviewer は毎タスクでは起動しない。追加のモデル席は人が明示した1回まで。
 
 ### 非自明な落とし穴
 
