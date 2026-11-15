@@ -7,11 +7,14 @@ import { join } from 'node:path';
 import { computeMetrics, foldCycle } from './lib/cycle-metrics.mjs';
 import {
 	PACKET_MAX_BYTES,
+	addedDiffText,
 	assertAdrPaths,
 	buildPacket,
 	encodePacket,
+	isProcedurePath,
 	nextDispatchSeq,
 	packetFileName,
+	procedureLeak,
 	queryCatalogHits,
 	writePacket
 } from './lib/harness-query.mjs';
@@ -220,4 +223,39 @@ test('--adr は docs/decisions だけ', () => {
 		join(root, 'docs', 'decisions', 'evil.md')
 	);
 	assert.throws(() => assertAdrPaths(root, ['docs/decisions/evil.md']), /symlink/);
+});
+
+test('手順は AGENTS と TEMPLATE と skill の md だけ', () => {
+	assert.equal(isProcedurePath('AGENTS.md'), true);
+	assert.equal(isProcedurePath('.claude/AGENTS.md'), true);
+	assert.equal(isProcedurePath('TEMPLATE.md'), true);
+	assert.equal(isProcedurePath('.claude/skills/cycle/SKILL.md'), true);
+	assert.equal(isProcedurePath('.agents/skills/cycle/SKILL.md'), true);
+	assert.equal(isProcedurePath('docs/learnings.md'), false);
+	assert.equal(isProcedurePath('policy/packet.rego'), false);
+	assert.equal(isProcedurePath('scripts/feature-gate.mjs'), false);
+	assert.equal(isProcedurePath('.claude/skills/cycle/SKILL.txt'), false);
+});
+
+test('差分の追加行だけを手順の検査対象にする', () => {
+	const diff = ['--- a/AGENTS.md', '+++ b/AGENTS.md', ' 残す', '+learnings: 日記', '-消す'].join('\n');
+	assert.equal(addedDiffText(diff), 'learnings: 日記');
+});
+
+test('禁則キーに値が付くと手順から拒否し、空と散文は通す', () => {
+	assert.deepEqual(procedureLeak('learnings: 日記本文', '').keys, ['learnings']);
+	assert.deepEqual(procedureLeak('"conversation": "残す"', '').keys, ['conversation']);
+	assert.deepEqual(procedureLeak("session: |\n  続く", '').keys, ['session']);
+	assert.deepEqual(procedureLeak('decisions: ""', '').keys, []);
+	assert.deepEqual(procedureLeak('learnings: null', '').keys, []);
+	assert.deepEqual(procedureLeak('learnings:', '').keys, []);
+	assert.deepEqual(procedureLeak('learnings は継がない。effort: high', '').keys, []);
+});
+
+test('日記の一続きを手順へ写すと拒否し、短い引用は通す', () => {
+	const diary = `固有日記${'あ'.repeat(160)}`;
+	assert.ok(diary.length >= 160);
+	assert.equal(procedureLeak(diary, diary).diary, true);
+	assert.equal(procedureLeak(diary.slice(0, 20), diary).diary, false);
+	assert.equal(procedureLeak('手順はゲートを通す。'.repeat(8), diary).diary, false);
 });

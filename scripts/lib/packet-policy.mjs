@@ -1,10 +1,18 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { assertAdrPaths, assertNoForbiddenKeys, hasFacts, packetFileName } from './harness-query.mjs';
+import {
+	addedDiffText,
+	assertAdrPaths,
+	assertNoForbiddenKeys,
+	hasFacts,
+	isProcedurePath,
+	packetFileName,
+	procedureLeak
+} from './harness-query.mjs';
 
 const WORKSPACE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -175,12 +183,17 @@ function gitEnv() {
 	return env;
 }
 
-function gitLines(root, args) {
+function gitText(root, args) {
 	return execFileSync(gitBin(), ['-c', 'core.quotePath=false', '-C', root, ...args], {
 		encoding: 'utf8',
 		cwd: root,
-		env: gitEnv()
-	})
+		env: gitEnv(),
+		stdio: ['ignore', 'pipe', 'pipe']
+	});
+}
+
+function gitLines(root, args) {
+	return gitText(root, args)
 		.split('\n')
 		.map((s) => s.trim())
 		.filter(Boolean);
@@ -189,11 +202,7 @@ function gitLines(root, args) {
 function resolveMergeBase(root) {
 	for (const base of ['origin/main', 'main']) {
 		try {
-			const mb = execFileSync(gitBin(), ['-c', 'core.quotePath=false', '-C', root, 'merge-base', base, 'HEAD'], {
-				encoding: 'utf8',
-				cwd: root,
-				env: gitEnv()
-			}).trim();
+			const mb = gitText(root, ['merge-base', base, 'HEAD']).trim();
 			if (mb) return mb;
 		} catch {
 			// 次の基準
@@ -212,6 +221,45 @@ export function listDiffPaths(root) {
 			...gitLines(root, ['diff', '--name-only', mb])
 		])
 	];
+}
+
+const PROCEDURE_BYTES = 1_048_576;
+
+export function procedureAddedText(root) {
+	const paths = listDiffPaths(root).filter(isProcedurePath);
+	const chunks = [];
+	for (const rel of paths) {
+		const abs = join(root, rel);
+		let st;
+		try {
+			st = lstatSync(abs);
+		} catch {
+			continue;
+		}
+		if (st.isSymbolicLink()) throw new Error(`手順の symlink は拒否: ${rel}`);
+		if (!st.isFile()) throw new Error(`手順は通常ファイルだけ: ${rel}`);
+		if (st.size > PROCEDURE_BYTES) throw new Error(`手順が大きすぎる: ${rel}`);
+		const untracked = gitLines(root, ['ls-files', '--others', '--exclude-standard', '--', rel]);
+		if (untracked.includes(rel)) {
+			chunks.push(readFileSync(abs, 'utf8'));
+			continue;
+		}
+		const mb = resolveMergeBase(root);
+		for (const args of [
+			['diff', '-U0', mb, '--', rel],
+			['diff', '-U0', '--', rel],
+			['diff', '-U0', '--cached', '--', rel]
+		]) {
+			chunks.push(addedDiffText(gitText(root, args)));
+		}
+	}
+	return chunks.join('\n');
+}
+
+export function assessProcedure(root) {
+	const diaryPath = join(root, 'docs', 'learnings.md');
+	const diary = existsSync(diaryPath) ? readFileSync(diaryPath, 'utf8') : '';
+	return procedureLeak(procedureAddedText(root), diary);
 }
 
 export function countCanonPaths(root, policyDir = join(WORKSPACE, 'policy')) {

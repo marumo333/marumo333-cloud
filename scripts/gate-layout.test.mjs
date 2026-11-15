@@ -25,6 +25,13 @@ test('HARNESS_ROOT が無い feature-gate はスクリプトの親をデータ�
 	assert.equal(layout.contractCheck, '/repo/scripts/contract-check.mjs');
 });
 
+test('feature-gate は手順の禁則キーと日記の写しを拒否する', () => {
+	const src = readFileSync(new URL('./feature-gate.mjs', import.meta.url), 'utf8');
+	assert.match(src, /assessProcedure\(layout\.dataRoot\)/);
+	assert.match(src, /手順に packet の禁則キーがある/);
+	assert.match(src, /手順が docs\/learnings\.md の日記を写している/);
+});
+
 test('feature-gate はデータ根の scripts ではなく隣の子を起動する', () => {
 	const src = readFileSync(new URL('./feature-gate.mjs', import.meta.url), 'utf8');
 	assert.match(src, /execFileSync\(process\.execPath, \[layout\.contractCheck, layout\.dataRoot\]/);

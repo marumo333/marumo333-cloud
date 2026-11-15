@@ -11,7 +11,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { ensureOpa } from './ensure-opa.mjs';
 import { runCheckBehavior } from './check-behavior.mjs';
 import { checksForProductPaths } from './lib/product-diff.mjs';
-import { evalProductPaths, listDiffPaths } from './lib/packet-policy.mjs';
+import { assessProcedure, evalProductPaths, listDiffPaths } from './lib/packet-policy.mjs';
 
 /**
  * 検査ロジックの位置と、読むツリーの根を分ける。
@@ -205,6 +205,14 @@ if (import.meta.url === entry) {
 		env: { ...process.env, HARNESS_ROOT: layout.dataRoot }
 	});
 	runProductDiff(layout);
+	let leak;
+	try {
+		leak = assessProcedure(layout.dataRoot);
+	} catch (e) {
+		fail(`手順を読めない: ${e.message || e}`);
+	}
+	if (leak.keys.length) fail(`手順に packet の禁則キーがある: ${leak.keys.join(', ')}`);
+	if (leak.diary) fail('手順が docs/learnings.md の日記を写している');
 
 	console.log('[feature-gate] 成功');
 }

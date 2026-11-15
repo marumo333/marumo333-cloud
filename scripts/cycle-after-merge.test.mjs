@@ -16,6 +16,12 @@ function run(env, args = []) {
 	});
 }
 
+test('strict は再起の入場に渡さない', () => {
+	const src = readFileSync(join(ROOT, 'scripts/cycle-after-merge.mjs'), 'utf8');
+	assert.match(src, /node_skip_rate: metrics\.node_skip_rate/);
+	assert.doesNotMatch(src, /strict/);
+});
+
 test('記録用の枝は承認も次周も書かない', () => {
 	const before = readFileSync(EVENTS, 'utf8');
 	const byHead = run({

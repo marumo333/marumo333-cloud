@@ -1,13 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildPacket, writePacket } from './lib/harness-query.mjs';
 import {
 	assertDispatchPolicy,
+	assessProcedure,
 	buildDispatchPolicyInput,
 	countCanonPaths,
 	effortAllowFor,
@@ -235,4 +236,28 @@ test('verify に grok 席は deny', () => {
 			}),
 		/席|deny|dispatch_seats/
 	);
+});
+
+test('手順の差分に禁則キーか日記の写しがあるとゲートの入力になる', () => {
+	const root = tmpRoot();
+	const git = (args) => {
+		const ran = execFileSync('git', args, { cwd: root, encoding: 'utf8' });
+		return ran;
+	};
+	git(['init', '-b', 'main']);
+	git(['config', 'user.email', 'packet@example.com']);
+	git(['config', 'user.name', 'packet']);
+	mkdirSync(join(root, 'docs'));
+	const diary = `固有日記${'あ'.repeat(160)}`;
+	writeFileSync(join(root, 'docs', 'learnings.md'), `${diary}\n`);
+	writeFileSync(join(root, 'AGENTS.md'), '親は常時。\n');
+	git(['add', 'AGENTS.md', 'docs/learnings.md']);
+	git(['commit', '-m', 'chore: 手順の初期を置く。']);
+	writeFileSync(join(root, 'AGENTS.md'), '親は常時。\nlearnings: 日記本文\n');
+	assert.deepEqual(assessProcedure(root).keys, ['learnings']);
+	writeFileSync(join(root, 'TEMPLATE.md'), `${diary}\n`);
+	assert.equal(assessProcedure(root).diary, true);
+	mkdirSync(join(root, '.claude', 'skills', 'cycle'), { recursive: true });
+	symlinkSync(join(root, 'docs', 'learnings.md'), join(root, '.claude', 'skills', 'cycle', 'SKILL.md'));
+	assert.throws(() => assessProcedure(root), /symlink/);
 });
