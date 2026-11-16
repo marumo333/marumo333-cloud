@@ -91,7 +91,8 @@ test('画面の差分は親が実行し、追加のレビュー席は毎タス�
 	assert.match(canon, /Codex/);
 	assert.doesNotMatch(canon, /Cursor 専用/);
 	assert.match(read('.claude/skills/verify/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
-	assert.match(read('.claude/skills/verify/SKILL.md'), /code-review と security-reviewer は起動しない/);
+	assert.match(read('.claude/skills/verify/SKILL.md'), /マーカーが無い push は hook が拒否する/);
+	assert.match(read('docs/GLOSSARY.md'), /\| レビューマーカー \|/);
 	assert.match(read('.claude/skills/adversarial-review/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
 	assert.match(read('docs/GLOSSARY.md'), /\| 画面検証 \|/);
 	assert.match(read('AGENTS.md'), /Grok Bot を1回起動/);

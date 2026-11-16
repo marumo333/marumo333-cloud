@@ -69,7 +69,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 ### モデルとレビュー
 
-常時の席は親である。実行モデルはホストの既定。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が1回、4つに分ける。コードを変えるのは直すだけ。緑のあと二周目は開かない。backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。
+常時の席は親である。実行モデルはホストの既定。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が1回、4つに分ける。コードを変えるのは直すだけ。緑のあと二周目は開かない。backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
 
 モデル ID は指定しない。役割と effort は `cycle/model-routing.yaml` に残す。ゲートが見るのは席トークンと件数と effort の幅で、ホストの製品スラッグは見ない。どの agent の定義にも `model:` は置かない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 

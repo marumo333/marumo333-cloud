@@ -13,6 +13,10 @@
 			{
 				"command": "node .cursor/hooks/pre-commit.mjs",
 				"failClosed": true
+			},
+			{
+				"command": "node .cursor/hooks/pr-open.mjs",
+				"failClosed": true
 			}
 		],
 		"beforeReadFile": [

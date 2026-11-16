@@ -34,7 +34,7 @@ commit は hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（
    そのあと親が差分を実行する。画面（`app/` `src/` `public/` `verify-env/` の tsx / jsx / vue / svelte / css / html）は、親が操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。行には各画面ファイルの sha256 を書く。中身が変わった古い行は覆わない。実在する画像か動画が無いと feature-gate が失敗する。検証環境は Cursor のクラウドが `start` で `http://127.0.0.1:8765` に配る。親は Grok Bot を1回起動して、確認するを押す。コマンド（scripts / policy / contracts / features / それ以外の src と app）は、その終了コードが結果である。散文は画面を撮らない。
    実行のあと、親が1回、セキュリティ・振る舞い・設計を読む。指摘は直す・検討・記録・却下に分ける。
    コードを変えるのは直すだけ。そのあと noEmit が緑なら止める。二周目は開かない。
-   レビュー subagent は起動しない。code-review と security-reviewer は毎タスクでは起動しない。人が明示した追加のモデル席は1回まで。モデル ID は指定しない。
+   実装中のレビュー subagent は起動しない。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前に、親が code-review を1回読み、security-reviewer を1回起動する。マーカーは `cycle/pr-review.jsonl`。kind は code-review と security-review。sha256 はマーカーファイルを除いたツリーである。hooks は Task を起動しない。マーカーが違う push と、マーカーが無い `gh pr create` は hook が拒否する。人が明示した追加のモデル席は1回まで。モデル ID は指定しない。
 4. 内省: 親が learnings に書く。reflector は起動しない。
 5. 機能ごとに ADR、レビュー、proposed、admitted は作らない。
 6. 人間が作業の PR をマージすると次の cycle が開く。枝が `cycle/` の記録用 PR では開かない。Feature 票は作らない。hooks から Task は起動しない。
