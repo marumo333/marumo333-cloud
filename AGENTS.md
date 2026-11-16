@@ -1,6 +1,6 @@
 # AGENTS.md
 
-このリポジトリは Cursor、Claude Code、Codex で同じ契約を使うテンプレート。対象は席・正本・ゲート・cycle。手順は [`TEMPLATE.md`](TEMPLATE.md)、エージェント向けの規約は [`.claude/AGENTS.md`](.claude/AGENTS.md)。Claude Code もこの `AGENTS.md` と [`.claude/AGENTS.md`](.claude/AGENTS.md) を読む。`CLAUDE.md` は置かない。Codex は `.codex/hooks.json` も読む。人の判断は [`docs/decisions/`](docs/decisions/) と [`docs/learnings.md`](docs/learnings.md) に残す。用語は [`docs/GLOSSARY.md`](docs/GLOSSARY.md)。ここに無い名前は作らない。モデル ID は指定しない。
+このリポジトリの開発は Cursor のクラウドで閉じる。Grok Bot が画面を押す。Claude Code と Codex では開発を完了しない。対象は席・正本・ゲート・cycle。手順は [`TEMPLATE.md`](TEMPLATE.md)、エージェント向けの規約は [`.claude/AGENTS.md`](.claude/AGENTS.md)。`CLAUDE.md` は置かない。開いたセッションの commit 拒否は `.claude/settings.json` と `.codex/hooks.json` も同じゲートを呼ぶ。人の判断は [`docs/decisions/`](docs/decisions/) と [`docs/learnings.md`](docs/learnings.md) に残す。用語は [`docs/GLOSSARY.md`](docs/GLOSSARY.md)。ここに無い名前は作らない。モデル ID は指定しない。
 
 ## Cursor Cloud specific instructions
 

@@ -117,7 +117,8 @@ test('Cursor と Claude Code と Codex は同じ契約の入口を持つ', () =>
 		assert.match(text, /Codex/);
 		assert.match(text, /モデル ID は指定しない/);
 	}
-	assert.match(agents, /Claude Code もこの `AGENTS.md`/);
+	assert.match(agents, /開発を完了しない/);
+	assert.match(canon, /Cursor のクラウドに統一する/);
 	assert.match(agents, /`CLAUDE.md` は置かない/);
 	assert.doesNotMatch(agents, /このリポジトリは Cursor ハーネスのテンプレート/);
 	const pins = read('docs/multi-agent-and-pins.md');
@@ -148,7 +149,9 @@ test('Cursor と Claude Code と Codex は同じ契約の入口を持つ', () =>
 	assert.doesNotMatch(cloud.install, /setup-host/);
 	assert.match(read('AGENTS.md'), /\.cursor\/environment\.json/);
 	const readme = read('README.md');
-	assert.match(readme, /## 3つのプロバイダ/);
+	assert.match(readme, /## 開発ホスト/);
+	assert.match(readme, /開発は Cursor のクラウドに統一する/);
+	assert.doesNotMatch(readme, /## 3つのプロバイダ/);
 	assert.match(readme, /Cursor は `\.cursor\/hooks\.json` と `AGENTS\.md`/);
 	assert.match(readme, /Claude Code は `AGENTS\.md` と `\.claude\/AGENTS\.md` と `\.claude\/settings\.json`/);
 	assert.match(readme, /Codex は `AGENTS\.md` と `\.codex\/hooks\.json`/);

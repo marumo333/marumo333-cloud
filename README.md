@@ -1,11 +1,11 @@
 # marumo-cloud
 
-Cursor、Claude Code、Codex で同じ契約を使う**テンプレート**。対象は席・正本・ゲート・cycle（[ADR 0039](docs/decisions/0039-harness-template-cycle-graph.md)）。
+Cursor のクラウドで開発を閉じる**テンプレート**。対象は席・正本・ゲート・cycle（[ADR 0039](docs/decisions/0039-harness-template-cycle-graph.md)）。
 ライセンスは [MIT](LICENSE)（Copyright (c) 2026 marumo333）。
 
 ## 実行環境
 
-開発は Cursor、Claude Code、Codex。ゲート（`feature-gate` / OPA）は Linux amd64 の CI と、各ホストの commit 前 hook で通す。macOS / Windows / Linux arm64 ではゲートは動かない。
+開発は Cursor のクラウドに統一する。ゲート（`feature-gate` / OPA）は Linux amd64 の CI と、commit 前 hook で通す。macOS / Windows / Linux arm64 ではゲートは動かない。
 `.agents/skills` は `.claude/skills` へのシンボリックリンクである。Windows では開発者モードが無いと辿れない。
 手元の clone は閲覧と空リポへの載せに使う。commit とゲートはクラウドまたは Actions で通す。
 
@@ -29,13 +29,13 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 手順の本体は [TEMPLATE.md](TEMPLATE.md)。
 
-## 3つのプロバイダ
+## 開発ホスト
 
-対応するのは Cursor、Claude Code、Codex の3つ。どれで開いても同じ [`AGENTS.md`](AGENTS.md) と [`.claude/AGENTS.md`](.claude/AGENTS.md) を読む。
+開発は Cursor のクラウドに統一する。画面を閉じるのは Grok Bot だけである。Claude Code と Codex は開発ホストにしない。契約は [`AGENTS.md`](AGENTS.md) と [`.claude/AGENTS.md`](.claude/AGENTS.md)。
 
-- Cursor は `.cursor/hooks.json` と `AGENTS.md`
-- Claude Code は `AGENTS.md` と `.claude/AGENTS.md` と `.claude/settings.json`
-- Codex は `AGENTS.md` と `.codex/hooks.json`
+- Cursor は `.cursor/hooks.json` と `AGENTS.md` と `.cursor/environment.json`
+- Claude Code は `AGENTS.md` と `.claude/AGENTS.md` と `.claude/settings.json` を読んでも、開発は完了しない
+- Codex は `AGENTS.md` と `.codex/hooks.json` を読んでも、開発は完了しない
 
 `CLAUDE.md` は置かない。スキルは `.claude/skills` にあり、Codex は `.agents/skills` から同じディレクトリを読む。`pnpm install` は git hooks を入れる。クラウドも手元もプロバイダとモデルは聞かない。実行はホストの既定。
 

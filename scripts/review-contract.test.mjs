@@ -91,7 +91,9 @@ test('画面の差分は親が実行し、追加のレビュー席は毎タス�
 	assert.match(canon, /レビュー subagent は起動しない/);
 	assert.match(canon, /Claude Code/);
 	assert.match(canon, /Codex/);
-	assert.doesNotMatch(canon, /Cursor 専用/);
+	assert.match(canon, /Cursor のクラウドに統一する/);
+	assert.match(canon, /開発ホストにしない/);
+	assert.doesNotMatch(canon, /同じ契約を使う/);
 	assert.match(read('.claude/skills/verify/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
 	assert.match(read('.claude/skills/verify/SKILL.md'), /マーカーが無い push は hook が拒否する/);
 	assert.match(read('docs/GLOSSARY.md'), /\| レビューマーカー \|/);
