@@ -9,7 +9,7 @@ export const VERIFY_ENV_PORT = 8765;
 
 const pagePath = join(dirname(fileURLToPath(import.meta.url)), '..', 'verify-env', 'index.html');
 
-export function createVerifyEnvServer(html = readFileSync(pagePath)) {
+export function createVerifyEnvServer(html, readPage = () => readFileSync(pagePath)) {
 	return createServer((req, res) => {
 		let pathname = '/';
 		try {
@@ -18,11 +18,21 @@ export function createVerifyEnvServer(html = readFileSync(pagePath)) {
 			pathname = '/';
 		}
 		if (req.method === 'GET' && (pathname === '/' || pathname === '/index.html')) {
+			let body = html;
+			if (body === undefined) {
+				try {
+					body = readPage();
+				} catch {
+					res.writeHead(500, { 'content-type': 'text/plain; charset=utf-8' });
+					res.end('検証環境を読めない');
+					return;
+				}
+			}
 			res.writeHead(200, {
 				'content-type': 'text/html; charset=utf-8',
 				'cache-control': 'no-store'
 			});
-			res.end(html);
+			res.end(body);
 			return;
 		}
 		res.writeHead(404, { 'content-type': 'text/plain; charset=utf-8' });
