@@ -227,14 +227,14 @@ test('--adr は docs/decisions だけ', () => {
 
 test('手順は AGENTS と TEMPLATE と skill の md だけ', () => {
 	assert.equal(isProcedurePath('AGENTS.md'), true);
-	assert.equal(isProcedurePath('.claude/AGENTS.md'), true);
+	assert.equal(isProcedurePath('.cursor/skills/cycle/SKILL.md'), true);
 	assert.equal(isProcedurePath('TEMPLATE.md'), true);
-	assert.equal(isProcedurePath('.claude/skills/cycle/SKILL.md'), true);
-	assert.equal(isProcedurePath('.agents/skills/cycle/SKILL.md'), true);
 	assert.equal(isProcedurePath('docs/learnings.md'), false);
 	assert.equal(isProcedurePath('policy/packet.rego'), false);
 	assert.equal(isProcedurePath('scripts/feature-gate.mjs'), false);
-	assert.equal(isProcedurePath('.claude/skills/cycle/SKILL.txt'), false);
+	assert.equal(isProcedurePath('.cursor/skills/cycle/SKILL.txt'), false);
+	assert.equal(isProcedurePath('.claude/skills/cycle/SKILL.md'), false);
+	assert.equal(isProcedurePath('.agents/skills/cycle/SKILL.md'), false);
 });
 
 test('差分の追加行だけを手順の検査対象にする', () => {

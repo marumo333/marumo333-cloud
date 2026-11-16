@@ -89,5 +89,4 @@ test('pre-push と CI と shell hook がマーカー検査を呼ぶ', () => {
 	assert.match(workflow, /PR_HEAD/);
 	assert.match(readFileSync(new URL('../.cursor/hooks/pr-open.mjs', import.meta.url), 'utf8'), /guardPrPublish/);
 	assert.match(readFileSync(new URL('../.cursor/hooks.json', import.meta.url), 'utf8'), /pr-open\.mjs/);
-	assert.match(readFileSync(new URL('../.claude/hooks/pre_commit_guard.mjs', import.meta.url), 'utf8'), /guardPrPublish/);
 });

@@ -6,8 +6,8 @@ import data.harness.canon
 
 test_scripts_and_hooks_are_canon if {
 	canon.canon_path("scripts/feature-gate.mjs")
-	canon.canon_path(".claude/hooks/block_secret_write.mjs")
-	canon.canon_path(".claude/settings.json")
+	canon.canon_path(".cursor/hooks/block-secret-write.mjs")
+	canon.canon_path("AGENTS.md")
 	canon.canon_path("package.json")
 	canon.canon_path("pnpm-lock.yaml")
 	canon.canon_path("README.md")
@@ -25,7 +25,9 @@ test_learnings_and_benchmarks_are_not_canon if {
 	not canon.canon_path("knowledge/features/F-0001.yaml")
 	not canon.canon_path("docs/learnings.md")
 	not canon.canon_path("cycle/events.jsonl")
-	not canon.canon_path(".claude/CLAUDE.md")
+	not canon.canon_path(".claude/AGENTS.md")
+	not canon.canon_path(".codex/hooks.json")
+	not canon.canon_path(".agents/skills")
 }
 
 test_living_decisions_are_canon if {

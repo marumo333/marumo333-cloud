@@ -6,16 +6,15 @@ Cursor のクラウドで開発を閉じる**テンプレート**。対象は席
 ## 実行環境
 
 開発は Cursor のクラウドに統一する。ゲート（`feature-gate` / OPA）は Linux amd64 の CI と、commit 前 hook で通す。macOS / Windows / Linux arm64 ではゲートは動かない。
-`.agents/skills` は `.claude/skills` へのシンボリックリンクである。Windows では開発者モードが無いと辿れない。
-手元の clone は閲覧と空リポへの載せに使う。commit とゲートはクラウドまたは Actions で通す。
+スキルと agent は `.cursor/` にある。手元の clone は閲覧と空リポへの載せに使う。commit とゲートはクラウドまたは Actions で通す。
 
 ## ガードの限界
 
-秘密の読み取りガードが止めるのは、ファイルを直接開く読みと、`cat` / `head` / `tail` / `less` / `more` / `source` / `printenv` だけである。`grep`、`awk`、`python` の open、`cp` は止まらない。拒否リストを足しても、シェルの書き方は残る。Claude Code は `.claude/settings.json` の `permissions.deny` が `Read(./.env)` を止める。確実に守ることは、秘密をリポジトリへ置かないことである。
+秘密の読み取りガードが止めるのは、ファイルを直接開く読みと、`cat` / `head` / `tail` / `less` / `more` / `source` / `printenv` だけである。`grep`、`awk`、`python` の open、`cp` は止まらない。拒否リストを足しても、シェルの書き方は残る。確実に守ることは、秘密をリポジトリへ置かないことである。
 
 commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単純な代入、`sh -c` と `eval` の中、`printf` や `echo` を `sh` へ渡す書き方、フラグ位置のコマンド置換を拒否する。`-F` と `--file` の値にあるコマンド置換は hook 回避にしない。壊れた hook 入力は許可に倒さず拒否する。完全なシェル解析ではない。
 
-秘密の書き込みは、パスが `src` であるかに依存しない。Codex の編集が `apply_patch` のとき、`.codex/hooks.json` の matcher にその名前を含める。ホストが別名を出す場合は、このガードには届かない。
+秘密の書き込みは、パスが `src` であるかに依存しない。実 `.env` は commit の検査が止める。文字列の検査は `.cursor/hooks/block-secret-write.mjs` にある。
 
 ## 何をするか
 
@@ -31,13 +30,9 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 ## 開発ホスト
 
-開発は Cursor のクラウドに統一する。画面を閉じるのは Grok Bot だけである。Claude Code と Codex は開発ホストにしない。契約は [`AGENTS.md`](AGENTS.md) と [`.claude/AGENTS.md`](.claude/AGENTS.md)。
+開発は Cursor のクラウドに統一する。画面を閉じるのは Grok Bot だけである。契約は [`AGENTS.md`](AGENTS.md)。入口は `.cursor/hooks.json` と `AGENTS.md` と `.cursor/environment.json`。スキルと agent は `.cursor/` にある。
 
-- Cursor は `.cursor/hooks.json` と `AGENTS.md` と `.cursor/environment.json`
-- Claude Code は `AGENTS.md` と `.claude/AGENTS.md` と `.claude/settings.json` を読んでも、開発は完了しない
-- Codex は `AGENTS.md` と `.codex/hooks.json` を読んでも、開発は完了しない
-
-`CLAUDE.md` は置かない。スキルは `.claude/skills` にあり、Codex は `.agents/skills` から同じディレクトリを読む。`pnpm install` は git hooks を入れる。クラウドも手元もプロバイダとモデルは聞かない。実行はホストの既定。
+`CLAUDE.md` は置かない。`pnpm install` は git hooks を入れる。クラウドも手元もプロバイダとモデルは聞かない。実行はホストの既定。
 
 ## 最初にやること
 
@@ -61,7 +56,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 初期化のコマンドは `node scripts/init.mjs --product` である。これは消すファイルの一覧を出すだけで、ファイルは残す。プロダクトの remote で実際に戻すのは `node scripts/init.mjs --product --apply` だけである。そのとき `cycle/events.jsonl` は空の `C-0001` になり、正本の yaml は残る。`docs/` は日付付きの日記と、決定以外の調査や図を落とす。`docs/decisions/` は残す。このテンプレートの remote では消さない。フォークしただけでは消えない。
 
-依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。三つの入口は同じ `AGENTS.md` を読む。実行はホストの既定。答えは共有の yaml には書かない。
+依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。入口は `AGENTS.md` と `.cursor/` を読む。実行はホストの既定。答えは共有の yaml には書かない。
 
 モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。枝が `cycle/` の記録用 PR をマージしても、次の記録用 PR は開かない。
 
@@ -102,11 +97,8 @@ hooks を踏むのは実装の commit。feature-gate は判定であり正本へ
 ## 構成
 
 ```
-AGENTS.md         Cursor、Claude Code、Codex が読む契約
-.claude/          Claude Code のエージェント / skill / hook
-.cursor/          Cursor の hook
-.codex/           Codex の hook
-.agents/skills    Codex から .claude/skills を見る
+AGENTS.md         契約
+.cursor/          hook / skill / agent / 検証環境
 docs/decisions/   人の判断
 docs/GLOSSARY.md  用語。ここに無い名前は作らない
 docs/learnings.md 実行のメモ

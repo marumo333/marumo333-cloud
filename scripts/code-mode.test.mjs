@@ -83,20 +83,20 @@ test('要約が上限を超えたら truncate せず失敗', () => {
 	assert.equal(JSON.stringify(r).includes(big), false);
 });
 
-test('Claude と Codex の code-mode hook は照会の連鎖を exit 2 で止める', () => {
-	const hook = join(dirname(fileURLToPath(import.meta.url)), '../.claude/hooks/code_mode_guard.mjs');
+test('code-mode hook は照会の連鎖を JSON で止める', () => {
+	const hook = join(dirname(fileURLToPath(import.meta.url)), '../.cursor/hooks/code-mode.mjs');
 	const denied = spawnSync(process.execPath, [hook], {
-		input: JSON.stringify({
-			hook_event_name: 'PreToolUse',
-			tool_input: { command: 'git status -sb && git diff --stat' }
-		}),
+		input: JSON.stringify({ command: 'git status -sb && git diff --stat' }),
 		encoding: 'utf8'
 	});
-	assert.equal(denied.status, 2);
-	assert.match(denied.stderr, /code-mode/);
+	assert.equal(denied.status, 0);
+	const body = JSON.parse(denied.stdout);
+	assert.equal(body.permission, 'deny');
+	assert.match(body.agent_message, /code-mode/);
 	const allowed = spawnSync(process.execPath, [hook], {
-		input: JSON.stringify({ tool_input: { command: 'git status -sb' } }),
+		input: JSON.stringify({ command: 'git status -sb' }),
 		encoding: 'utf8'
 	});
 	assert.equal(allowed.status, 0);
+	assert.equal(JSON.parse(allowed.stdout).permission, 'allow');
 });

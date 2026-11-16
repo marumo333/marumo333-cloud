@@ -7,7 +7,7 @@ description: ハーネス健全性を決定的にスコア化し履歴に記録�
 
 ## スコア項目（決定的・0-100）
 
-- ルール網羅: `.claude/AGENTS.md` の禁止が hooks で強制されているか。
+- ルール網羅: `AGENTS.md` の禁止が hooks で強制されているか。
 - 判断の置き場: 人の判断が `docs/decisions/` にあり、実行メモが `docs/learnings.md` にあるか。
 - **席割当の整合（[[0033]] / [[0049]] / [[0051]]）**: `model-routing.yaml` は host-default。製品スラッグは無い。検証用 subagent は空。AGENTS / skills が verifier や 3体の起動を必須にしていないか。
 - **ハーネス制約（[[0039]] / [[0051]]）**: 席は親。モデル ID は指定しない。検証は契約と feature-gate。機能ごとに ADR、レビュー、proposed、admitted は作らない。

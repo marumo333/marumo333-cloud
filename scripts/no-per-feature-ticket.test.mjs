@@ -30,11 +30,11 @@ test('機能ごとの ADR と proposed と admitted を作る手順が残って�
 	assert.equal(existsSync(join(ROOT, 'scripts/knowledge-catalog.mjs')), false);
 	const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 	assert.equal(pkg.scripts['opa:admit'], undefined);
-	const verify = readFileSync(join(ROOT, '.claude/skills/verify/SKILL.md'), 'utf8');
+	const verify = readFileSync(join(ROOT, '.cursor/skills/verify/SKILL.md'), 'utf8');
 	assert.doesNotMatch(verify, /knowledge-catalog/);
-	const dispatch = readFileSync(join(ROOT, '.claude/skills/parallel-dispatch/SKILL.md'), 'utf8');
+	const dispatch = readFileSync(join(ROOT, '.cursor/skills/parallel-dispatch/SKILL.md'), 'utf8');
 	assert.doesNotMatch(dispatch, /claude-opus/);
-	const cycle = readFileSync(join(ROOT, '.claude/skills/cycle/SKILL.md'), 'utf8');
+	const cycle = readFileSync(join(ROOT, '.cursor/skills/cycle/SKILL.md'), 'utf8');
 	assert.doesNotMatch(cycle, /--seat opus/);
 	assert.doesNotMatch(cycle, /--feature F-/);
 	const gateWorkflow = readFileSync(join(ROOT, '.github/workflows/feature-gate.yml'), 'utf8');

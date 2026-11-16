@@ -12,8 +12,8 @@ const DIARY_CHARS = 160;
 
 export function isProcedurePath(rel) {
 	const p = String(rel ?? '').replaceAll('\\', '/');
-	if (p === 'AGENTS.md' || p === '.claude/AGENTS.md' || p === 'TEMPLATE.md') return true;
-	return /^\.(?:claude|agents)\/skills\/.+\.md$/.test(p);
+	if (p === 'AGENTS.md' || p === 'TEMPLATE.md') return true;
+	return /^\.cursor\/skills\/.+\.md$/.test(p);
 }
 
 export function addedDiffText(diff) {

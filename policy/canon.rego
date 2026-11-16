@@ -5,11 +5,9 @@ import rego.v1
 # ハーネスの正本パス。差分がここを含むと stay を拒否する。被覆率にはしない。
 # プロダクト（features/ src/ app/）は product_path。feature-gate が振る舞いと型を見る。
 
-canon_path(p) if startswith(p, ".claude/skills/")
+canon_path(p) if startswith(p, ".cursor/skills/")
 
-canon_path(p) if startswith(p, ".claude/agents/")
-
-canon_path(p) if startswith(p, ".claude/hooks/")
+canon_path(p) if startswith(p, ".cursor/agents/")
 
 canon_path(p) if p == ".cursor/hooks.json"
 
@@ -22,9 +20,7 @@ canon_path(p) if p == "cycle/model-routing.yaml"
 
 canon_path(p) if p == "cycle/code-quality.yaml"
 
-canon_path(p) if p == ".claude/AGENTS.md"
-
-canon_path(p) if p == ".claude/settings.json"
+canon_path(p) if p == "AGENTS.md"
 
 canon_path(p) if startswith(p, "docs/decisions/")
 
