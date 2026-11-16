@@ -47,7 +47,7 @@ node scripts/start-feature.mjs <slug>
 node scripts/check-behavior.mjs
 ```
 
-`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` が消す予定を出すだけで、ファイルは残す。`--product --apply` が `cycle/` と決定以外の `docs/` を空の周に戻し、この用語集は無いときだけ作り、あるときは残す。この順には入れない。name がまだ `marumo-cloud` で `policy/canon.rego` があるあいだも、テンプレート以外の remote で `--apply` は蓄積を空の周に戻す。機能ファイルは、name を変えるまで作らない。テンプレートの remote では消さない。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられていて、そのテストが成功するときだけ成功する。作った直後は失敗する。二度目は既存ファイルを上書きしない。
+`init` は依存と、無いときだけの `AGENTS.md`、`docs/GLOSSARY.md`、`ACTIONS.md` を置く。用語は `docs/GLOSSARY.md` だけに書く。ここに無い名前は作らない。プロダクトの remote では `--product` が消す予定を出すだけで、ファイルは残す。`--product --apply` が `cycle/` と決定以外の `docs/` を空の周に戻し、検証環境の画面を未確認へ戻す。この用語集は無いときだけ作り、あるときは残す。この順には入れない。name がまだ `marumo-cloud` で `policy/canon.rego` があるあいだも、テンプレート以外の remote で `--apply` は蓄積を空の周に戻す。機能ファイルは、name を変えるまで作らない。テンプレートの remote では消さない。`start-feature` は `features/<slug>/` に振る舞いと作業と、失敗するテストだけを置く。`design.md` は `--design` のときだけ。`check-behavior` は、振る舞いが空でなく、テストが置き換えられていて、そのテストが成功するときだけ成功する。作った直後は失敗する。二度目は既存ファイルを上書きしない。
 
 ## 1周
 

@@ -14,7 +14,7 @@
 | packet | 子に渡す JSON。会話と `docs/learnings.md` の全文は継がない。 |
 | Feature 票 | 作らない。機能の作業は `features/<slug>/`。 |
 | ホストの既定 | 実行するモデルはホストが決める。共有の yaml にはモデル ID を書かない。 |
-| 初期化 | `node scripts/init.mjs`。`--product` は消す予定の一覧だけを出す。プロダクトの remote でファイルを空の周に戻すのは `--product --apply` だけ。このファイルは無いときだけ作り、あるときは残す。 |
+| 初期化 | `node scripts/init.mjs`。`--product` は消す予定の一覧だけを出す。プロダクトの remote でファイルを空の周に戻すのは `--product --apply` だけ。検証環境の画面も未確認へ戻す。このファイルは無いときだけ作り、あるときは残す。 |
 | 蓄積 | `cycle/events.jsonl` と `docs/learnings.md` の日記。テンプレートの remote では残す。プロダクトでは `--apply` のときだけ空の周に戻す。 |
 | プロダクトコード | `features/` と `src/` と `app/`。ゲートは差分がここを含むとき、振る舞いのテストと `tsc --noEmit` を見る。 |
 | 画面検証 | `app/` `src/` `public/` `verify-env/` の tsx、jsx、vue、svelte、css、html を、操作して残すスクリーンショットか録画。記録は `cycle/runtime-verify.jsonl` と、各画面ファイルの sha256。実在する画像か動画が無い、または中身が変わった古い行では、ゲートが失敗する。 |
