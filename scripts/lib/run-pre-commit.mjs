@@ -30,7 +30,11 @@ export function runPreCommit() {
 		for (const rel of staged) {
 			let buf;
 			try {
-				buf = execFileSync('git', ['show', `:${rel}`], { cwd: ROOT, maxBuffer: 2_000_000 });
+				buf = execFileSync('git', ['show', `:${rel}`], {
+					cwd: ROOT,
+					maxBuffer: 2_000_000,
+					stdio: ['ignore', 'pipe', 'ignore']
+				});
 			} catch {
 				continue;
 			}
