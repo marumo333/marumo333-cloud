@@ -21,6 +21,8 @@
 | 検証環境 | Cursor のクラウドが `start` で `http://127.0.0.1:8765` に配る画面。置き場は `verify-env/`。 |
 | Grok Bot | 検証環境の画面を1回操作する実行。親が Cursor のクラウドで起動する。モデル ID は書かない。code-review と security-reviewer ではない。 |
 | レビューマーカー | PR を開く前の code-review と security-review の記録。ファイルは `cycle/pr-review.jsonl`。sha256 はマーカー自身を除いたツリー。無い push と `gh pr create` は hook が拒否する。hooks は Task を起動しない。 |
+| 作業ログ | `cycle/work-log.jsonl`。要件または設計を決めたあと、残りと自己レビューの直す件数を残す。次の実行は `node scripts/work-log.mjs resume` で続きを読む。残りがある push は拒否する。 |
+| 自己レビュー | 親が直す件数を数える。直すが残るあいだ同じ直すだけを繰り返す。0 で止める。新しい指摘を探す周は開かない。上限は 4。 |
 
 ## Object type
 

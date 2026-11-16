@@ -11,7 +11,7 @@ export const REVIEW_KINDS = ['code-review', 'security-review'];
 export function digestFromEntries(entries) {
 	const lines = [];
 	for (const entry of entries) {
-		if (!entry || entry.path === MARKER_PATH) continue;
+		if (!entry || entry.path === MARKER_PATH || entry.path === 'cycle/work-log.jsonl') continue;
 		lines.push(`${entry.mode} ${entry.type} ${entry.sha} ${entry.path}`);
 	}
 	lines.sort();

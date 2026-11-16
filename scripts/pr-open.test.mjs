@@ -12,6 +12,7 @@ import {
 const entries = [
 	{ mode: '100644', type: 'blob', sha: 'a'.repeat(40), path: 'AGENTS.md' },
 	{ mode: '100644', type: 'blob', sha: 'b'.repeat(40), path: 'cycle/pr-review.jsonl' },
+	{ mode: '100644', type: 'blob', sha: 'd'.repeat(40), path: 'cycle/work-log.jsonl' },
 	{ mode: '120000', type: 'blob', sha: 'c'.repeat(40), path: '.agents/skills' }
 ];
 
@@ -29,7 +30,9 @@ test('マーカーを除いたツリーのダイジェストは並びとマー�
 	assert.equal(digest().length, 64);
 	assert.equal(
 		digest(),
-		digestFromEntries(entries.filter((e) => e.path !== 'cycle/pr-review.jsonl'))
+		digestFromEntries(
+			entries.filter((e) => e.path !== 'cycle/pr-review.jsonl' && e.path !== 'cycle/work-log.jsonl')
+		)
 	);
 });
 

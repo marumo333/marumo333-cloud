@@ -32,7 +32,7 @@ description: 親はホストの既定。検証は契約と feature-gate を親�
 9. **packet（[[0045]]）**: 子には `scripts/harness-query.mjs` が書いた JSON だけ。
    会話・learnings 全文・ADR 全件は継がない。effort / escalate は親が cycle の dispatch 行に書く。
    子を出すときは packet。会話 fork は置かない。
-10. 型の正解は `tsc --noEmit`（[[0051]]）。親が指摘を直す・検討・記録・却下に1回分ける。コードを変えるのは直すだけ。そのあと noEmit が緑なら止め、二周目は開かない。親が `node scripts/contract-check.mjs` と `node scripts/feature-gate.mjs` を実行する。verifier / reflector / 3体は起動しない。人が明示した `skill:adversarial-review` は新しい周で1回まで。`skill:verify` と `skill:reflect` は新しい周で0回。過去の周は記録済み回数を超えて増やせない。超えたら feature-gate が拒否する。
+10. 型の正解は `tsc --noEmit`（[[0051]]）。親が指摘を直す・検討・記録・却下に1回分ける。コードを変えるのは直すだけ。直すが残るあいだ同じ直すだけを繰り返し、0 で止める。新しい指摘を探す二周目は開かない。親が `node scripts/contract-check.mjs` と `node scripts/feature-gate.mjs` を実行する。verifier / reflector / 3体は起動しない。人が明示した `skill:adversarial-review` は新しい周で1回まで。`skill:verify` と `skill:reflect` は新しい周で0回。過去の周は記録済み回数を超えて増やせない。超えたら feature-gate が拒否する。
 11. **読み方。** 検索は一致行を残す（`node scripts/search-lines.mjs` か `rg -n`）。`rg -l` と件数だけは hook が deny。行が分かったファイルは `node scripts/file-window.mjs --file PATH --line N` の 100 行。`node_modules` と `.tools` は読まない。観測を畳むときは `scripts/lib/observation-fold.mjs` で、再実行できる検索の古いものだけ。ファイル本文は畳まない。役割と effort は `cycle/model-routing.yaml`。製品スラッグは書かない。ADR の決定本文と learnings の日付付き記録は履歴。
 
 ## superpowers 接続

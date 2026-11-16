@@ -19,6 +19,8 @@ test('親は4分類を1回行い、直すだけコードを変える', () => {
 	assert.match(skill, /記録/);
 	assert.match(skill, /却下/);
 	assert.match(skill, /二周目は開かない/);
+	assert.match(skill, /直すが 0 なら止める/);
+	assert.match(skill, /node scripts\/work-log\.mjs resume/);
 	assert.doesNotMatch(skill, /3体/);
 	assert.doesNotMatch(skill, /モード2/);
 });
