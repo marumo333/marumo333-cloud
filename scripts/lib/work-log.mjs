@@ -122,15 +122,23 @@ export function appendWork(root, entry) {
  * @param {string} root
  * @param {string} sha
  */
+function gitOut(root, args) {
+	return execFileSync('git', args, {
+		cwd: root,
+		encoding: 'utf8',
+		stdio: ['ignore', 'pipe', 'ignore']
+	});
+}
+
 export function workGapAt(root, sha) {
-	const tree = execFileSync('git', ['ls-tree', '-r', sha], { cwd: root, encoding: 'utf8' });
+	let rev = sha;
+	if (sha === 'HEAD' && gitOut(root, ['diff', '--cached', '--name-only']).trim()) {
+		rev = gitOut(root, ['write-tree']).trim();
+	}
+	const tree = gitOut(root, ['ls-tree', '-r', rev]);
 	let text = '';
 	try {
-		text = execFileSync('git', ['show', `${sha}:${WORK_LOG}`], {
-			cwd: root,
-			encoding: 'utf8',
-			stdio: ['ignore', 'pipe', 'ignore']
-		});
+		text = gitOut(root, ['show', `${rev}:${WORK_LOG}`]);
 	} catch {
 		text = '';
 	}
