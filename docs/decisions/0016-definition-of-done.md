@@ -1,7 +1,7 @@
 # ADR 0016: 完了の定義
 
 - 状態: 受理（改正: [[0037]] [[0038]] [[0039]] [[0041]] [[0042]] [[0046]] [[0047]] [[0049]] [[0051]]）
-- 改正注記: 完了は `node scripts/feature-gate.mjs` と、ハーネスにテストがある変更の `pnpm test`。Feature の被覆はしない。3体レビューはしない。内省は `docs/learnings.md`。cycle の記録は `cycle/events.jsonl`。品質の例外は `cycle/code-quality.yaml`。画面の差分は、親が操作したスクリーンショットか録画と、各画面ファイルの sha256 が `cycle/runtime-verify.jsonl` に無いと feature-gate が失敗する。中身が変わった古い行は覆わない。code-review と security-reviewer は毎タスクでは起動しない。
+- 改正注記: 完了は `node scripts/feature-gate.mjs` と、ハーネスにテストがある変更の `pnpm test`。Feature の被覆はしない。3体レビューはしない。内省は `docs/learnings.md`。cycle の記録は `cycle/events.jsonl`。品質の例外は `cycle/code-quality.yaml`。検証環境は Cursor のクラウドが配り、親が Grok Bot を1回起動して操作する。画面の差分は、そのスクリーンショットか録画と、各画面ファイルの sha256 が `cycle/runtime-verify.jsonl` に無いと feature-gate が失敗する。中身が変わった古い行は覆わない。code-review と security-reviewer は毎タスクでは起動しない。
 - 日付: 2026-07-04
 - 背景: 自己成長ループの「検証」段が何を満たせば前進可能かを機械的に定義する（`cycle/code-quality.yaml`）。
 - 決定: あるタスクが **完了** とみなせるのは全て満たす時:

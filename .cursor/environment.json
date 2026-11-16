@@ -1,3 +1,4 @@
 {
-	"install": "corepack enable && corepack prepare pnpm@10.33.3 --activate && pnpm install --frozen-lockfile && node scripts/init.mjs --product"
+	"install": "corepack enable && corepack prepare pnpm@10.33.3 --activate && pnpm install --frozen-lockfile && node scripts/init.mjs --product",
+	"start": "node scripts/verify-env-serve.mjs"
 }

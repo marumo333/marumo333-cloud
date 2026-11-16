@@ -5,6 +5,7 @@ import { mkdirSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+	artifactBytesOk,
 	artifactPathError,
 	isScreenPath,
 	runtimeKind,
@@ -23,6 +24,7 @@ test('差分は画面、コマンド、散文に分かれる', () => {
 	assert.equal(isScreenPath('app/page.tsx'), true);
 	assert.equal(isScreenPath('src/App.vue'), true);
 	assert.equal(isScreenPath('public/index.html'), true);
+	assert.equal(isScreenPath('verify-env/index.html'), true);
 	assert.equal(isScreenPath('src/lib/parse.ts'), false);
 	assert.equal(isScreenPath('docs/readme.css'), false);
 	assert.equal(runtimeKind(['docs/learnings.md', 'AGENTS.md']), 'prose');
@@ -59,6 +61,8 @@ test('画面の差分は実在する成果物の行が覆ったときだけ空�
 });
 
 test('成果物のパスはリポジトリ内の画像か動画だけ', () => {
+	assert.equal(artifactBytesOk('cycle/screen.png', Buffer.from([0x89, 0x50, 0x4e, 0x47, 0, 0, 0, 0])), true);
+	assert.equal(artifactBytesOk('cycle/screen.png', Buffer.from('png')), false);
 	assert.equal(artifactPathError('cycle/screen.webp'), '');
 	assert.equal(artifactPathError('cycle/walk.webm'), '');
 	assert.notEqual(artifactPathError('../secret.png'), '');
@@ -78,11 +82,18 @@ test('シンボリックリンクの成果物は画面を覆わない', () => {
 	const source = 'export {};\n';
 	writeFileSync(join(root, 'app', 'page.tsx'), source);
 	const sha256 = createHash('sha256').update(source).digest('hex');
-	writeFileSync(join(root, 'cycle', 'real.png'), 'png');
+	const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+	writeFileSync(join(root, 'cycle', 'real.png'), png);
+	writeFileSync(join(root, 'cycle', 'fake.png'), 'png');
 	symlinkSync(join(root, 'cycle', 'real.png'), join(root, 'cycle', 'link.png'));
 	writeFileSync(
 		join(root, 'cycle', 'runtime-verify.jsonl'),
 		`${JSON.stringify({ kind: 'screen', paths: ['app/page.tsx'], artifact: 'cycle/link.png', sha256: { 'app/page.tsx': sha256 } })}\n`
+	);
+	assert.deepEqual(screenGap(root, ['app/page.tsx']), ['app/page.tsx']);
+	writeFileSync(
+		join(root, 'cycle', 'runtime-verify.jsonl'),
+		`${JSON.stringify({ kind: 'screen', paths: ['app/page.tsx'], artifact: 'cycle/fake.png', sha256: { 'app/page.tsx': sha256 } })}\n`
 	);
 	assert.deepEqual(screenGap(root, ['app/page.tsx']), ['app/page.tsx']);
 	writeFileSync(

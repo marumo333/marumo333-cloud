@@ -4,7 +4,7 @@ import { existsSync, lstatSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { listDiffPaths } from './packet-policy.mjs';
 
-const SCREEN_ROOTS = ['app/', 'src/', 'public/'];
+const SCREEN_ROOTS = ['app/', 'src/', 'public/', 'verify-env/'];
 const SCREEN_EXT = /\.(?:tsx|jsx|vue|svelte|css|html)$/i;
 const ARTIFACT_EXT = /\.(?:png|webp|jpe?g|gif|mp4|webm)$/i;
 const COMMAND_PREFIXES = ['scripts/', 'policy/', 'contracts/', 'features/', 'src/', 'app/', '.github/workflows/'];
@@ -35,6 +35,27 @@ export function runtimeKind(paths) {
 	if (list.some(isScreenPath)) return 'screen';
 	if (list.some(isCommandPath)) return 'command';
 	return 'prose';
+}
+
+const PNG = [0x89, 0x50, 0x4e, 0x47];
+const JPEG = [0xff, 0xd8, 0xff];
+const GIF = [0x47, 0x49, 0x46];
+const WEBM = [0x1a, 0x45, 0xdf, 0xa3];
+
+function startsWith(buf, bytes) {
+	return buf.length >= bytes.length && bytes.every((b, i) => buf[i] === b);
+}
+
+/** 拡張子だけの空ファイルは成果物にしない。 */
+export function artifactBytesOk(path, bytes) {
+	const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes ?? []);
+	if (/\.png$/i.test(path)) return startsWith(buf, PNG);
+	if (/\.jpe?g$/i.test(path)) return startsWith(buf, JPEG);
+	if (/\.gif$/i.test(path)) return startsWith(buf, GIF);
+	if (/\.webp$/i.test(path)) return buf.length >= 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP';
+	if (/\.webm$/i.test(path)) return startsWith(buf, WEBM);
+	if (/\.mp4$/i.test(path)) return buf.length >= 12 && buf.toString('ascii', 4, 8) === 'ftyp';
+	return false;
 }
 
 export function artifactPathError(artifact) {
@@ -140,7 +161,8 @@ export function screenGap(root, diffPaths = listDiffPaths(root)) {
 			const abs = inside(root, p);
 			if (!abs) return false;
 			try {
-				return lstatSync(abs).isFile();
+				if (!lstatSync(abs).isFile()) return false;
+				return artifactBytesOk(p, readFileSync(abs));
 			} catch {
 				return false;
 			}

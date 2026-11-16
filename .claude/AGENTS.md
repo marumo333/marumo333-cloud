@@ -31,7 +31,7 @@ commit は hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（
    brainstorming / writing-plans。重ならないスライスの前は plan-confirm。
 2. 実装: TDD。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。モデル ID は指定しない。
 3. 検証: 先に決定的な検査。型の正解は `tsc --noEmit`（[[0051]]）。契約と `node scripts/feature-gate.mjs` と、テストがある変更の `pnpm test`。
-   そのあと親が差分を実行する。画面（`app/` `src/` `public/` の tsx / jsx / vue / svelte / css / html）は、親が操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。行には各画面ファイルの sha256 を書く。中身が変わった古い行は覆わない。実在するファイルが無いと feature-gate が失敗する。コマンド（scripts / policy / contracts / features / それ以外の src と app）は、その終了コードが結果である。散文は画面を撮らない。
+   そのあと親が差分を実行する。画面（`app/` `src/` `public/` `verify-env/` の tsx / jsx / vue / svelte / css / html）は、親が操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。行には各画面ファイルの sha256 を書く。中身が変わった古い行は覆わない。実在する画像か動画が無いと feature-gate が失敗する。検証環境は Cursor のクラウドが `start` で `http://127.0.0.1:8765` に配る。親は Grok Bot を1回起動して、確認するを押す。コマンド（scripts / policy / contracts / features / それ以外の src と app）は、その終了コードが結果である。散文は画面を撮らない。
    実行のあと、親が1回、セキュリティ・振る舞い・設計を読む。指摘は直す・検討・記録・却下に分ける。
    コードを変えるのは直すだけ。そのあと noEmit が緑なら止める。二周目は開かない。
    レビュー subagent は起動しない。code-review と security-reviewer は毎タスクでは起動しない。人が明示した追加のモデル席は1回まで。モデル ID は指定しない。

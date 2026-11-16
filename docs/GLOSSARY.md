@@ -17,7 +17,9 @@
 | 初期化 | `node scripts/init.mjs`。`--product` は消す予定の一覧だけを出す。プロダクトの remote でファイルを空の周に戻すのは `--product --apply` だけ。このファイルは無いときだけ作り、あるときは残す。 |
 | 蓄積 | `cycle/events.jsonl` と `docs/learnings.md` の日記。テンプレートの remote では残す。プロダクトでは `--apply` のときだけ空の周に戻す。 |
 | プロダクトコード | `features/` と `src/` と `app/`。ゲートは差分がここを含むとき、振る舞いのテストと `tsc --noEmit` を見る。 |
-| 画面検証 | `app/` `src/` `public/` の tsx、jsx、vue、svelte、css、html を、親が操作して残すスクリーンショットか録画。記録は `cycle/runtime-verify.jsonl` と、各画面ファイルの sha256。実在するファイルが無い、または中身が変わった古い行では、ゲートが失敗する。 |
+| 画面検証 | `app/` `src/` `public/` `verify-env/` の tsx、jsx、vue、svelte、css、html を、操作して残すスクリーンショットか録画。記録は `cycle/runtime-verify.jsonl` と、各画面ファイルの sha256。実在する画像か動画が無い、または中身が変わった古い行では、ゲートが失敗する。 |
+| 検証環境 | Cursor のクラウドが `start` で `http://127.0.0.1:8765` に配る画面。置き場は `verify-env/`。 |
+| Grok Bot | 検証環境の画面を1回操作する実行。親が Cursor のクラウドで起動する。モデル ID は書かない。code-review と security-reviewer ではない。 |
 
 ## Object type
 
