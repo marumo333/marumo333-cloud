@@ -986,7 +986,7 @@
 
 **問い**
 
-- AIE Code 2026 の Lauren Tan「All Code Is Slop (Except Mine)」（https://youtu.be/O_zcc6Xl12g）に合わせ、クラウド開発を Cursor だけへ戻し、毎回画面を操作したあと code-review と security-review の席を回すべきか。
+- AIE Code 2026 の Lauren Tan「[All Code Is Slop (Except Mine)](https://www.youtube.com/watch?v=O_zcc6Xl12g)」に合わせ、クラウド開発を Cursor だけへ戻し、毎回画面を操作したあと code-review と security-review の席を回すべきか。
 
 **効いた**
 
