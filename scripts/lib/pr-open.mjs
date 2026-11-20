@@ -6,7 +6,88 @@ import { pipedShellPayloads, quotedPayloads, splitShellSegments } from './commit
 import { expandSimpleAssignments } from './shell-assign.mjs';
 
 export const MARKER_PATH = 'cycle/pr-review.jsonl';
+export const EVENTS_LOG = 'cycle/events.jsonl';
 export const REVIEW_KINDS = ['code-review', 'security-review'];
+
+const GIT_TEXT_MAX = 8 * 1024 * 1024;
+
+function gitText(root, args) {
+	return execFileSync('git', args, {
+		cwd: root,
+		encoding: 'utf8',
+		stdio: ['ignore', 'pipe', 'ignore'],
+		maxBuffer: GIT_TEXT_MAX
+	});
+}
+
+export function treeDigest(root, rev) {
+	return digestFromEntries(parseTree(gitText(root, ['ls-tree', '-r', rev])));
+}
+
+export function commitParents(root, rev) {
+	try {
+		gitText(root, ['rev-parse', '--verify', '--quiet', `${rev}^{commit}`]);
+	} catch {
+		return [];
+	}
+	const out = gitText(root, ['log', '-1', '--format=%P', rev]).trim();
+	return out ? out.split(/\s+/) : [];
+}
+
+export function changedPaths(root, from, to) {
+	let out = '';
+	try {
+		out = gitText(root, ['diff-tree', '--no-commit-id', '--name-only', '-r', from, to]);
+	} catch (error) {
+		const stdout = error && typeof error.stdout === 'string' ? error.stdout : '';
+		if (error && error.status === 1 && stdout) out = stdout;
+		else throw error;
+	}
+	return out.split('\n').filter(Boolean);
+}
+
+function showPath(root, rev, path) {
+	try {
+		return execFileSync('git', ['show', `${rev}:${path}`], {
+			cwd: root,
+			encoding: 'utf8',
+			stdio: ['ignore', 'pipe', 'pipe'],
+			maxBuffer: GIT_TEXT_MAX
+		});
+	} catch (error) {
+		if (error && error.status === 128) return null;
+		throw error;
+	}
+}
+
+/** 旧い本文がそのまま先頭に残り、増分は改行で終わる行だけ。 */
+export function isEventsAppend(root, from, to) {
+	const before = showPath(root, from, EVENTS_LOG) ?? '';
+	const after = showPath(root, to, EVENTS_LOG);
+	if (after == null) return false;
+	if (after.length <= before.length || !after.startsWith(before)) return false;
+	if (before.length > 0 && !before.endsWith('\n')) return false;
+	return after.endsWith('\n');
+}
+
+/**
+ * 差分が cycle/events.jsonl への追記だけのとき、親の検査結果を継ぐ。
+ * gapsAt は親の rev を受け、空配列ならその親は開いている。
+ * @param {string} root
+ * @param {string} rev
+ * @param {(parent: string, seen: Set<string>) => string[]} gapsAt
+ * @param {Set<string>} seen
+ */
+export function carriedFromEventsAppend(root, rev, gapsAt, seen) {
+	for (const parent of commitParents(root, rev)) {
+		if (seen.has(parent)) continue;
+		const paths = changedPaths(root, parent, rev);
+		if (paths.length !== 1 || paths[0] !== EVENTS_LOG) continue;
+		if (!isEventsAppend(root, parent, rev)) continue;
+		if (gapsAt(parent, seen).length === 0) return true;
+	}
+	return false;
+}
 
 export function digestFromEntries(entries) {
 	const lines = [];
@@ -153,13 +234,19 @@ export function guardPrPublish(command) {
 	return { action, message: '' };
 }
 
-export function reviewGapAt(root, sha) {
-	const tree = execFileSync('git', ['ls-tree', '-r', sha], { cwd: root, encoding: 'utf8' });
-	let text = '';
+function markerText(root, rev) {
 	try {
-		text = execFileSync('git', ['show', `${sha}:${MARKER_PATH}`], { cwd: root, encoding: 'utf8' });
+		return gitText(root, ['show', `${rev}:${MARKER_PATH}`]);
 	} catch {
-		text = '';
+		return '';
 	}
-	return missingReviewMarkers(text, digestFromEntries(parseTree(tree)));
+}
+
+export function reviewGapAt(root, sha, seen = new Set()) {
+	if (seen.has(sha)) return [...REVIEW_KINDS];
+	seen.add(sha);
+	const missing = missingReviewMarkers(markerText(root, sha), treeDigest(root, sha));
+	if (missing.length === 0) return [];
+	if (carriedFromEventsAppend(root, sha, (parent, seenNow) => reviewGapAt(root, parent, seenNow), seen)) return [];
+	return missing;
 }

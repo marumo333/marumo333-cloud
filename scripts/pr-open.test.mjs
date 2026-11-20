@@ -1,12 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
 	digestFromEntries,
 	guardPrPublish,
 	missingReviewMarkers,
 	parseTree,
-	pushedShas
+	pushedShas,
+	isEventsAppend,
+	reviewGapAt
 } from './lib/pr-open.mjs';
 
 const entries = [
@@ -80,6 +85,81 @@ test('push の --no-verify と、マーカー検査の対象コマンドを分�
 		'a'.repeat(40)
 	]);
 	assert.deepEqual(pushedShas(''), []);
+});
+
+test('cycle/events.jsonl だけの commit と merge はレビューマーカーを開かない', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'pr-events-'));
+	const git = (args) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' });
+	git(['init', '-b', 'main']);
+	git(['config', 'user.email', 't@example.com']);
+	git(['config', 'user.name', 't']);
+	writeFileSync(join(dir, 'a.txt'), 'a\n');
+	git(['add', 'a.txt']);
+	git(['commit', '-m', 'init']);
+	const first = digestFromEntries(parseTree(execFileSync('git', ['ls-tree', '-r', 'HEAD'], { cwd: dir, encoding: 'utf8' })));
+	mkdirSync(join(dir, 'cycle'));
+	writeFileSync(
+		join(dir, 'cycle/pr-review.jsonl'),
+		['code-review', 'security-review'].map((kind) => JSON.stringify({ kind, sha256: first })).join('\n') + '\n'
+	);
+	git(['add', 'cycle/pr-review.jsonl']);
+	git(['commit', '-m', 'markers']);
+	assert.deepEqual(reviewGapAt(dir, 'HEAD'), []);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	git(['commit', '-m', 'events']);
+	assert.deepEqual(reviewGapAt(dir, 'HEAD'), []);
+	git(['checkout', '-b', 'journal']);
+	appendFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"human_approved"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	git(['commit', '-m', 'journal']);
+	git(['checkout', 'main']);
+	git(['merge', '--no-ff', '-m', 'merge', 'journal']);
+	assert.deepEqual(reviewGapAt(dir, 'HEAD'), []);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"rewritten"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	git(['commit', '-m', 'rewrite']);
+	assert.deepEqual(reviewGapAt(dir, 'HEAD'), ['code-review', 'security-review']);
+	writeFileSync(join(dir, 'a.txt'), 'b\n');
+	git(['add', 'a.txt']);
+	git(['commit', '-m', 'code']);
+	assert.deepEqual(reviewGapAt(dir, 'HEAD'), ['code-review', 'security-review']);
+});
+
+test('最終行の延長は cycle/events.jsonl の追記ではない', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'pr-extend-'));
+	const git = (args) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' });
+	git(['init', '-b', 'main']);
+	git(['config', 'user.email', 't@example.com']);
+	git(['config', 'user.name', 't']);
+	mkdirSync(join(dir, 'cycle'));
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	git(['commit', '-m', 'events']);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n ');
+	git(['add', 'cycle/events.jsonl']);
+	const extended = execFileSync('git', ['write-tree'], { cwd: dir, encoding: 'utf8' }).trim();
+	assert.equal(isEventsAppend(dir, 'HEAD', extended), false);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n{"type":"human_approved"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	const appended = execFileSync('git', ['write-tree'], { cwd: dir, encoding: 'utf8' }).trim();
+	assert.equal(isEventsAppend(dir, 'HEAD', appended), true);
+});
+
+test('1MB を超える events の差し替えは追記ではない', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'pr-big-'));
+	const git = (args) => execFileSync('git', args, { cwd: dir, stdio: 'ignore' });
+	git(['init', '-b', 'main']);
+	git(['config', 'user.email', 't@example.com']);
+	git(['config', 'user.name', 't']);
+	mkdirSync(join(dir, 'cycle'));
+	writeFileSync(join(dir, 'cycle/events.jsonl'), `${'a'.repeat(1024 * 1024)}\n`);
+	git(['add', 'cycle/events.jsonl']);
+	git(['commit', '-m', 'events']);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"rewritten"}\n');
+	git(['add', 'cycle/events.jsonl']);
+	const replaced = execFileSync('git', ['write-tree'], { cwd: dir, encoding: 'utf8' }).trim();
+	assert.equal(isEventsAppend(dir, 'HEAD', replaced), false);
 });
 
 test('pre-push と CI と shell hook がマーカー検査を呼ぶ', () => {

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { digestFromEntries, parseTree } from './lib/pr-open.mjs';
@@ -78,6 +78,55 @@ test('ステージした作業ログは、これから入る木の自己レビ�
 	appendWork(dir, { kind: 'self-review', sha256: next, fix: 0, pass: 1, left: [] });
 	git(dir, ['add', 'cycle/work-log.jsonl']);
 	assert.deepEqual(workGapAt(dir, 'HEAD'), []);
+});
+
+test('cycle/events.jsonl だけの commit と merge は自己レビューを開かない', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'work-events-'));
+	git(dir, ['init', '-b', 'main']);
+	git(dir, ['config', 'user.email', 't@example.com']);
+	git(dir, ['config', 'user.name', 't']);
+	writeFileSync(join(dir, 'a.txt'), 'a\n');
+	git(dir, ['add', 'a.txt']);
+	git(dir, ['commit', '-m', 'init']);
+	const first = digestFromEntries(parseTree(execFileSync('git', ['ls-tree', '-r', 'HEAD'], { cwd: dir, encoding: 'utf8' })));
+	mkdirSync(join(dir, 'cycle'));
+	writeFileSync(
+		join(dir, 'cycle/work-log.jsonl'),
+		[
+			{ kind: 'decided', what: '設計', left: ['実装'] },
+			{ kind: 'done', left: [] },
+			{ kind: 'self-review', sha256: first, fix: 0, pass: 1, left: [] }
+		]
+			.map((row) => JSON.stringify(row))
+			.join('\n') + '\n'
+	);
+	git(dir, ['add', 'cycle/work-log.jsonl']);
+	git(dir, ['commit', '-m', 'log']);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n');
+	git(dir, ['add', 'cycle/events.jsonl']);
+	assert.deepEqual(workGapAt(dir, 'HEAD'), []);
+	git(dir, ['commit', '-m', 'events']);
+	assert.deepEqual(workGapAt(dir, 'HEAD'), []);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"cycle_open"}\n{"type":"node_state"}\n');
+	git(dir, ['add', 'cycle/events.jsonl']);
+	git(dir, ['commit', '-m', 'events-2']);
+	assert.deepEqual(workGapAt(dir, 'HEAD'), []);
+	git(dir, ['checkout', '-b', 'journal']);
+	appendFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"human_approved"}\n');
+	git(dir, ['add', 'cycle/events.jsonl']);
+	git(dir, ['commit', '-m', 'journal']);
+	git(dir, ['checkout', 'main']);
+	git(dir, ['merge', '--no-ff', '-m', 'merge', 'journal']);
+	assert.deepEqual(workGapAt(dir, 'HEAD'), []);
+	writeFileSync(join(dir, 'cycle/events.jsonl'), '{"type":"rewritten"}\n');
+	git(dir, ['add', 'cycle/events.jsonl']);
+	assert.ok(workGapAt(dir, 'HEAD').includes('自己レビューが無い'));
+	git(dir, ['commit', '-m', 'rewrite']);
+	assert.ok(workGapAt(dir, 'HEAD').includes('自己レビューが無い'));
+	writeFileSync(join(dir, 'a.txt'), 'b\n');
+	git(dir, ['add', 'a.txt', 'cycle/events.jsonl']);
+	git(dir, ['commit', '-m', 'code']);
+	assert.ok(workGapAt(dir, 'HEAD').includes('自己レビューが無い'));
 });
 
 test('作業ログはディレクトリへ追記できる', () => {
