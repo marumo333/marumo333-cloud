@@ -1,6 +1,7 @@
 ---
 name: backend-architect
 description: ハーネス設計判断。機能ごとに ADR は起票しない。
+model: grok-4.7-xhigh
 tools: Read, Grep, Glob, Write, Edit
 ---
 

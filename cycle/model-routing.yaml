@@ -1,27 +1,27 @@
 # ハーネス席 — ADR 0031 / 0033 / 0037 / 0039 / 0049
-# 実行モデルはホストの既定。製品スラッグは書かない。席の名前は役割だけ。
-# 第3の effort は medium。high には上げない。
+# 実行モデルは grok-4.7-xhigh。席の名前は役割だけ。別の製品スラッグは書かない。
+# packet の effort は high。medium は許容に残す。第3の effort は medium。
 # 検証用 subagent は起動しない（[[0051]]）。追加ゲートと review_trio は空。
 harness_agents:
-  model: host-default
+  model: grok-4.7-xhigh
   plan_gates:
     - plan-confirm
   extra_gates: []
   review_trio: []
   budget_guards:
-    parent_chat: host-default
+    parent_chat: grok-4.7-xhigh
     gate_input: artifacts-only
     third_lens_seat: none
-    no_named_model: true
+    no_named_model: false
     extra_seat: human-requested-once
-    implement_seat: host-default
+    implement_seat: grok-4.7-xhigh
     trio_when: never
     plan_confirm_when: before-fanout-only
     no_generic_task_as_gate: true
     no_mixed_review_trio: true
-    product_slug_required: false
+    product_slug_required: true
 # 親と実装の既定 effort は high（[[0049]]）。medium は許可に残し、ピンにはしない。
-# 幅1の上書きは packet.rego が deny。ゲートを親が下げることも不可。
+# 製品スラッグの努力段は xhigh。packet の幅は medium と high。幅1の上書きは packet.rego が deny。
 effort_defaults:
   parent: high
   implement: high

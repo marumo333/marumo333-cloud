@@ -13,10 +13,10 @@ flowchart TB
     Boot --> B0["git clone"]
     B0 --> B1["起動時に初期化（cycle と docs）"]
     B1 --> HS["入口は .cursor"]
-    HS --> BM["実行モデルはホストの既定"]
+    HS --> BM["実行モデルは grok-4.7-xhigh"]
     BM --> BG["commit で同じ feature-gate"]
     BG -.-> NQ["クラウドも手元も質問しない"]
-    NQ -.-> NY["共有 yaml には書かない"]
+    NQ -.-> NY["共有 yaml は grok-4.7-xhigh"]
     NY -.-> MD["CLAUDE.md は置かない"]
   end
   AH ~~~ TH
