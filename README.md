@@ -58,7 +58,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。入口は `AGENTS.md` と `.cursor/` を読む。実行はホストの既定。答えは共有の yaml には書かない。
 
-モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。枝が `cycle/` の記録用 PR をマージしても、次の記録用 PR は開かない。
+モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。承認の記録は、そのマージ先の `cycle/events.jsonl` へ直接載る。記録用の PR は開かない。枝が `cycle/` のマージでは、承認も次周も書かない。
 
 ![入口の as-is と to-be](docs/architecture/host-entry-as-is-to-be.gif)
 
@@ -90,7 +90,7 @@ hooks を踏むのは実装の commit。feature-gate は判定であり正本へ
 
 ### 再起的自己改善
 
-人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。記録の commit は PR にする。main へは直接 push しない。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
+人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。記録はマージ先へ直接載る。記録用の PR は開かない。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
 
 ![再起的自己改善](docs/architecture/self-improve-flow.gif)
 

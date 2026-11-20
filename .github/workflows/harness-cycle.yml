@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
+      pull-requests: read
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-      - name: 承認を記録し、次の cycle を PR で開く。main へは直接 push しない
+          ref: ${{ github.event.pull_request.base.ref }}
+      - name: 承認をマージ先へ載せる。記録用 PR は開かない
         env:
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -22,22 +22,4 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           MERGED: 'true'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          node scripts/cycle-after-merge.mjs
-          git config user.name "harness-cycle"
-          git config user.email "harness-cycle@users.noreply.github.com"
-          git add cycle/events.jsonl
-          if git diff --cached --quiet; then
-            echo "イベントの変更なし"
-            exit 0
-          fi
-          branch="cycle/journal-${PR_NUMBER}-${MERGE_SHA:0:7}"
-          git checkout -B "$branch"
-          git commit -m "chore: サイクル #${PR_NUMBER} の人間承認を記録する。"
-          git push origin "HEAD:${branch}"
-          gh pr create \
-            --base "$BASE_REF" \
-            --head "$branch" \
-            --title "chore: サイクル #${PR_NUMBER} の人間承認を記録する" \
-            --body "マージ後の cycle/events.jsonl だけを載せる。main へは直接 push しない。Feature は起票しない。"
+        run: node scripts/land-cycle-receipt.mjs

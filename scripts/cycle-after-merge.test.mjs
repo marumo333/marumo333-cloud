@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -60,4 +61,42 @@ test('作業の枝は dry-run で判定まで進む', () => {
 	assert.equal(r.status, 0, r.stderr);
 	assert.match(r.stdout, /"recurse"/);
 	assert.equal(readFileSync(EVENTS, 'utf8'), before);
+});
+
+test('同じマージの承認は二度書かない', () => {
+	const dir = mkdtempSync(join(tmpdir(), 'cycle-receipt-'));
+	mkdirSync(join(dir, 'cycle'), { recursive: true });
+	writeFileSync(join(dir, 'cycle/required-cycle.json'), readFileSync(join(ROOT, 'cycle/required-cycle.json')));
+	const kept = '{"type": "cycle_open", "cycle": "C-0001"}\n';
+	writeFileSync(join(dir, 'cycle/events.jsonl'), kept);
+	const opa = join(ROOT, '.tools', 'opa');
+	if (existsSync(opa)) {
+		mkdirSync(join(dir, '.tools'), { recursive: true });
+		copyFileSync(opa, join(dir, '.tools', 'opa'));
+		chmodSync(join(dir, '.tools', 'opa'), 0o755);
+	}
+	const bin = join(dir, 'bin');
+	mkdirSync(bin);
+	writeFileSync(join(bin, 'gh'), '#!/bin/sh\necho \'[]\'\n');
+	chmodSync(join(bin, 'gh'), 0o755);
+	const env = {
+		HARNESS_ROOT: dir,
+		OPA_POLICY_DIR: join(ROOT, 'policy'),
+		PATH: `${bin}:${process.env.PATH}`,
+		PR_HEAD_REF: 'cursor/example-be02',
+		GITHUB_HEAD_REF: 'cursor/example-be02',
+		MERGED: 'true',
+		PR_NUMBER: '9',
+		MERGE_SHA: 'abc1234'
+	};
+	const first = run(env);
+	assert.equal(first.status, 0, first.stderr);
+	const text = readFileSync(join(dir, 'cycle/events.jsonl'), 'utf8');
+	assert.ok(text.startsWith(kept));
+	assert.equal(text.split('\n').filter((line) => line.includes('"merge_sha":"abc1234"')).length, 1);
+	assert.equal(text.split('\n').filter((line) => line.includes('cycle_open')).length, 2);
+	const second = run(env);
+	assert.equal(second.status, 0, second.stderr);
+	assert.match(second.stderr, /このマージの承認は既にある/);
+	assert.equal(readFileSync(join(dir, 'cycle/events.jsonl'), 'utf8'), text);
 });
