@@ -25,6 +25,23 @@ jobs:
             gate="${tmp}/scripts/feature-gate.mjs"
           fi
           HARNESS_ROOT="${data_root}" node "${gate}"
+      - name: PR を開くマーカーを検査する
+        env:
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if git cat-file -e origin/main:scripts/pr-open-check.mjs 2>/dev/null; then
+            tmp="$(mktemp -d)"
+            git archive origin/main scripts | tar -x -C "$tmp"
+            check="${tmp}/scripts/pr-open-check.mjs"
+          else
+            check="scripts/pr-open-check.mjs"
+          fi
+          if [ -n "${PR_HEAD}" ]; then
+            node "$check" --sha "${PR_HEAD}"
+          else
+            node "$check"
+          fi
       - name: ハーネス単体テスト
         run: node scripts/run-harness-tests.mjs
       - name: コミット主語を検査する

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync, lstatSync, readlinkSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,18 +22,17 @@ const PRODUCT_SLUG = /grok-\d|claude-[a-z0-9]|gpt-\d|gemini-|muse-spark-|cursor-
 
 const LIVING = [
 	'cycle/model-routing.yaml',
-	'.claude/AGENTS.md',
 	'AGENTS.md',
 	'README.md',
 	'TEMPLATE.md',
 	'docs/multi-agent-and-pins.md',
-	'.claude/skills/parallel-dispatch/SKILL.md',
-	'.claude/skills/harness-api-budget/SKILL.md',
-	'.claude/skills/plan-confirm/SKILL.md',
-	'.claude/skills/adversarial-review/SKILL.md',
-	'.claude/skills/harness-audit/SKILL.md',
-	'.claude/agents/backend-architect.md',
-	'.claude/agents/security-reviewer.md',
+	'.cursor/skills/parallel-dispatch/SKILL.md',
+	'.cursor/skills/harness-api-budget/SKILL.md',
+	'.cursor/skills/plan-confirm/SKILL.md',
+	'.cursor/skills/adversarial-review/SKILL.md',
+	'.cursor/skills/harness-audit/SKILL.md',
+	'.cursor/agents/backend-architect.md',
+	'.cursor/agents/security-reviewer.md',
 	'docs/architecture/review-overview.mmd',
 	'docs/architecture/runtime-overview.mmd',
 	'docs/architecture/audit-overview.mmd',
@@ -41,16 +40,16 @@ const LIVING = [
 ];
 
 test('どの agent の frontmatter にも model を置かない', () => {
-	const agents = readdirSync(join(ROOT, '.claude/agents')).filter((name) => name.endsWith('.md'));
+	const agents = readdirSync(join(ROOT, '.cursor/agents')).filter((name) => name.endsWith('.md'));
 	assert.deepEqual(agents.sort(), ['backend-architect.md', 'security-reviewer.md']);
 	for (const name of agents) {
-		assert.doesNotMatch(frontmatter(`.claude/agents/${name}`), /^model:/m, name);
+		assert.doesNotMatch(frontmatter(`.cursor/agents/${name}`), /^model:/m, name);
 	}
-	assert.equal(existsSync(join(ROOT, '.claude/agents/verifier.md')), false);
-	assert.equal(existsSync(join(ROOT, '.claude/agents/reflector.md')), false);
+	assert.equal(existsSync(join(ROOT, '.cursor/agents/verifier.md')), false);
+	assert.equal(existsSync(join(ROOT, '.cursor/agents/reflector.md')), false);
 	assert.equal(existsSync(join(ROOT, '.cursor/log_subagent_model.mjs')), false);
-	assert.match(read('.claude/skills/verify/SKILL.md'), /起動しない/);
-	assert.match(read('.claude/skills/reflect/SKILL.md'), /起動しない/);
+	assert.match(read('.cursor/skills/verify/SKILL.md'), /起動しない/);
+	assert.match(read('.cursor/skills/reflect/SKILL.md'), /起動しない/);
 });
 
 test('生きた契約に製品スラッグを書かず、席は役割だけ', () => {
@@ -83,12 +82,8 @@ test('commit hook はホストを聞かず、クラウドも手元も質問し�
 		'.cursor/hooks/pre-commit.mjs',
 		'.cursor/hooks/block-env-read.mjs',
 		'.cursor/hooks/code-mode.mjs',
-		'.claude/hooks/pre_commit_guard.mjs',
-		'.claude/hooks/block_env_read.mjs',
-		'.claude/hooks/block_secret_write.mjs',
-		'.claude/hooks/post_task_reflect.mjs',
-		'.claude/hooks/code_mode_guard.mjs',
-		'.codex/hooks.json'
+		'.cursor/hooks/pr-open.mjs',
+		'.cursor/hooks/block-secret-write.mjs'
 	];
 	for (const rel of files) {
 		const text = read(rel);
@@ -103,25 +98,22 @@ test('commit hook はホストを聞かず、クラウドも手元も質問し�
 	assert.match(pins, /プロバイダとモデルは聞かない/);
 	assert.doesNotMatch(pins, /一度だけ選ぶ/);
 	assert.match(pins, /共有の yaml には書かない/);
-	assert.match(pins, /各ホストは自分の入口を読む/);
+	assert.match(pins, /入口は `\.cursor\/hooks\.json` とルートの `AGENTS\.md`/);
 	assert.match(pins, /ホスト名を yaml に書いてモデル ID を割り当てない/);
 });
 
-test('Cursor と Claude Code と Codex は同じ契約の入口を持つ', () => {
+test('エージェントの入口は .cursor だけである', () => {
 	assert.equal(existsSync(join(ROOT, 'CLAUDE.md')), false);
-	assert.equal(existsSync(join(ROOT, '.claude/CLAUDE.md')), false);
+	assert.equal(existsSync(join(ROOT, '.claude')), false);
+	assert.equal(existsSync(join(ROOT, '.codex')), false);
+	assert.equal(existsSync(join(ROOT, '.agents')), false);
 	const agents = read('AGENTS.md');
-	const canon = read('.claude/AGENTS.md');
-	for (const text of [agents, canon]) {
-		assert.match(text, /Claude Code/);
-		assert.match(text, /Codex/);
-		assert.match(text, /モデル ID は指定しない/);
-	}
-	assert.match(agents, /Claude Code もこの `AGENTS.md`/);
-	assert.match(agents, /`CLAUDE.md` は置かない/);
+	assert.match(agents, /モデル ID は指定しない/);
+	assert.match(agents, /エージェントのフォルダは `\.cursor\/` だけである/);
+	assert.match(agents, /Cursor のクラウドで閉じる/);
 	assert.doesNotMatch(agents, /このリポジトリは Cursor ハーネスのテンプレート/);
 	const pins = read('docs/multi-agent-and-pins.md');
-	assert.match(pins, /Claude Code はルートの `AGENTS.md`/);
+	assert.match(pins, /入口は `\.cursor\/hooks\.json` とルートの `AGENTS\.md`/);
 	assert.match(pins, /`CLAUDE.md` は置かない/);
 	const hostFig = read('docs/architecture/host-entry-as-is-to-be.mmd');
 	assert.match(hostFig, /クラウド起動/);
@@ -148,27 +140,18 @@ test('Cursor と Claude Code と Codex は同じ契約の入口を持つ', () =>
 	assert.doesNotMatch(cloud.install, /setup-host/);
 	assert.match(read('AGENTS.md'), /\.cursor\/environment\.json/);
 	const readme = read('README.md');
-	assert.match(readme, /## 3つのプロバイダ/);
-	assert.match(readme, /Cursor は `\.cursor\/hooks\.json` と `AGENTS\.md`/);
-	assert.match(readme, /Claude Code は `AGENTS\.md` と `\.claude\/AGENTS\.md` と `\.claude\/settings\.json`/);
-	assert.match(readme, /Codex は `AGENTS\.md` と `\.codex\/hooks\.json`/);
-
-	const claudeHooks = read('.claude/settings.json');
-	const codexHooks = read('.codex/hooks.json');
-	for (const text of [claudeHooks, codexHooks]) {
-		assert.match(text, /block_env_read\.mjs/);
-		assert.match(text, /pre_commit_guard\.mjs/);
-		assert.match(text, /code_mode_guard\.mjs/);
-	}
+	assert.match(readme, /## 開発ホスト/);
+	assert.match(readme, /開発は Cursor のクラウドに統一する/);
+	assert.doesNotMatch(readme, /## 3つのプロバイダ/);
+	assert.match(readme, /入口は `\.cursor\/hooks\.json` と `AGENTS\.md`/);
+	assert.doesNotMatch(readme, /\.claude\//);
+	assert.doesNotMatch(readme, /\.codex\//);
 	assert.match(read('.cursor/hooks.json'), /pre-commit\.mjs/);
-
-	const link = lstatSync(join(ROOT, '.agents/skills'));
-	assert.equal(link.isSymbolicLink(), true);
-	assert.equal(readlinkSync(join(ROOT, '.agents/skills')), '../.claude/skills');
+	assert.match(read('.cursor/hooks.json'), /block-env-read\.mjs/);
 });
 
 test('重ならないスライスは計画確認のあとホストの既定で同時に進める', () => {
-	const agents = read('.claude/AGENTS.md');
+	const agents = read('AGENTS.md');
 	assert.match(agents, /ファイルが重ならないスライスはホストの既定で同時に進めるのが既定/);
 	assert.match(agents, /モデル ID は指定しない/);
 	assert.match(agents, /重なるファイルは親が書く/);
@@ -176,7 +159,7 @@ test('重ならないスライスは計画確認のあとホストの既定で�
 	assert.match(agents, /完成は 1 本の PR/);
 	assert.doesNotMatch(agents, /実装: TDD。親が書く。/);
 
-	const dispatch = read('.claude/skills/parallel-dispatch/SKILL.md');
+	const dispatch = read('.cursor/skills/parallel-dispatch/SKILL.md');
 	assert.match(dispatch, /ホストの既定/);
 	assert.match(dispatch, /モデルは指定しない/);
 	assert.match(dispatch, /重なるファイルは親が書く/);
@@ -184,7 +167,7 @@ test('重ならないスライスは計画確認のあとホストの既定で�
 	assert.doesNotMatch(dispatch, /作業ツリー分離/);
 	assert.doesNotMatch(dispatch, /best-of-n/);
 
-	const budget = read('.claude/skills/harness-api-budget/SKILL.md');
+	const budget = read('.cursor/skills/harness-api-budget/SKILL.md');
 	assert.match(budget, /重ならないスライスを同時に進める既定/);
 	assert.match(budget, /重なるファイルの実装/);
 	assert.match(budget, /完成は 1 本の PR/);

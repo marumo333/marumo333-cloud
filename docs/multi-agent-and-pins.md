@@ -44,7 +44,7 @@ flowchart TB
 
 commit hook はホストを聞かない。Cursor の hook も聞かない。git hook は commit で走り、`hooksPath` は `pnpm install` の `prepare` が書く。その install はクラウドでも手元でも CI でも走る。クラウドの起動は git clone のあと `node scripts/init.mjs --product` を呼ぶ。これは計画だけを出す。プロダクトの remote で `cycle/` と `docs/` を空の周に戻すのは `--product --apply` のときだけである。`cycle` の正本 yaml と `docs/decisions/` は残す。`docs/GLOSSARY.md` は無いときだけ空の見出しを作り、あるときは残す。このテンプレートの remote では消さない。プロバイダとモデルは聞かない。実行モデルはホストの既定。共有の yaml には書かない。
 
-各ホストは自分の入口を読む。Cursor は `.cursor/hooks.json` とルートの `AGENTS.md`、Claude Code はルートの `AGENTS.md` と `.claude/AGENTS.md` と `.claude/settings.json`、Codex はルートの `AGENTS.md` と `.codex/hooks.json`。`CLAUDE.md` は置かない。置くと既定の Claude は `AGENTS.md` を読まなくなる。スキルは `.claude/skills` にあり、Codex は `.agents/skills` から同じディレクトリを読む。共有のゲートは `host-default` のままである。ホスト名を yaml に書いてモデル ID を割り当てない。図は [`docs/architecture/host-entry-as-is-to-be.mmd`](architecture/host-entry-as-is-to-be.mmd)。
+入口は `.cursor/hooks.json` とルートの `AGENTS.md` と `.cursor/skills` である。`CLAUDE.md` は置かない。共有のゲートは `host-default` のままである。ホスト名を yaml に書いてモデル ID を割り当てない。図は [`docs/architecture/host-entry-as-is-to-be.mmd`](architecture/host-entry-as-is-to-be.mmd)。
 
 ## 重ならないスライスは同時に進め、重なるファイルは親が書く
 
@@ -55,7 +55,7 @@ commit hook はホストを聞かない。Cursor の hook も聞かない。git 
 | 実行 | 計画確認のあと、ファイルが重ならないスライスをホストの既定で同時に進める。モデル ID は指定しない。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。状態は実行の一覧で見る | ホストの実行一覧。このリポジトリは一覧の HTML を描かない |
 | 制御 | 誰が判断してよいか、何を git に残すか、何を機械が落とすか、1周をどう数えるか | このリポジトリの席、正本、ゲート、cycle |
 
-数十体を `packet.rego` の席に足すと、実行の並列と、判断の増殖が同じ規則になる。このリポジトリが止めたのは後者である。`C-0012` は adversarial の dispatch が 15 件だった。いまの review-cap は、人が明示したレビューを新しい周で 1 回、verify と reflect を 0 回にする。
+数十体を `packet.rego` の席に足すと、実行の並列と、判断の増殖が同じ規則になる。このリポジトリが止めたのは後者である。`C-0012` は adversarial の dispatch が 15 件だった。いまの review-cap は、人が明示したレビューを新しい周で 1 回、verify と reflect を 0 回にする。Cursor のクラウドが持つ検証環境は、`start` が配る画面である。親は Grok Bot を1回起動して操作する。モデル ID は書かない。PR の前の code-review と security-review はマーカーで見る。review-cap は変えない。毎タスクの追加席にはしない。
 
 論文は、役割を分けることと、席を増やすことが同じ結果にならない、と分かれている。
 

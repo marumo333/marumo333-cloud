@@ -3,6 +3,7 @@ import { execFileSync, execSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isBlockedEnvPath } from './blocked-env.mjs';
+import { secretWriteMessage } from './secret-write.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -25,6 +26,21 @@ export function runPreCommit() {
 		const badEnv = staged.find(isBlockedEnvPath);
 		if (badEnv) {
 			return { ok: false, message: `[pre-commit] 規約1: 実 .env(${badEnv}) をステージしています。除外してください。` };
+		}
+		for (const rel of staged) {
+			let buf;
+			try {
+				buf = execFileSync('git', ['show', `:${rel}`], {
+					cwd: ROOT,
+					maxBuffer: 2_000_000,
+					stdio: ['ignore', 'pipe', 'ignore']
+				});
+			} catch {
+				continue;
+			}
+			if (buf.includes(0) || buf.length > 1_000_000) continue;
+			const secret = secretWriteMessage(rel, buf.toString('utf8'));
+			if (secret) return { ok: false, message: `[pre-commit] ${secret}` };
 		}
 	} catch (e) {
 		return { ok: false, message: `[pre-commit] staged 一覧に失敗: ${String(e && e.message)}` };

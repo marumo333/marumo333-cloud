@@ -12,6 +12,8 @@ import { ensureOpa } from './ensure-opa.mjs';
 import { runCheckBehavior } from './check-behavior.mjs';
 import { checksForProductPaths } from './lib/product-diff.mjs';
 import { assessProcedure, evalProductPaths, listDiffPaths } from './lib/packet-policy.mjs';
+import { screenGap } from './lib/runtime-verify.mjs';
+import { workGapAt } from './lib/work-log.mjs';
 
 /**
  * 検査ロジックの位置と、読むツリーの根を分ける。
@@ -205,6 +207,17 @@ if (import.meta.url === entry) {
 		env: { ...process.env, HARNESS_ROOT: layout.dataRoot }
 	});
 	runProductDiff(layout);
+	let gap;
+	try {
+		gap = screenGap(layout.dataRoot);
+	} catch (e) {
+		fail(`画面検証の記録を読めない: ${e.message || e}`);
+	}
+	if (gap.length) {
+		fail(
+			`画面の差分に操作の記録が無い: ${gap.join(', ')}。cycle/runtime-verify.jsonl に kind が screen の行と、実在するスクリーンショットか録画を書く`
+		);
+	}
 	let leak;
 	try {
 		leak = assessProcedure(layout.dataRoot);
@@ -213,6 +226,13 @@ if (import.meta.url === entry) {
 	}
 	if (leak.keys.length) fail(`手順に packet の禁則キーがある: ${leak.keys.join(', ')}`);
 	if (leak.diary) fail('手順が docs/learnings.md の日記を写している');
+	let left;
+	try {
+		left = workGapAt(layout.dataRoot, 'HEAD');
+	} catch (e) {
+		fail(`作業ログを読めない: ${e.message || e}`);
+	}
+	if (left.length) fail(`続きがある: ${left.join(', ')}。node scripts/work-log.mjs resume`);
 
 	console.log('[feature-gate] 成功');
 }

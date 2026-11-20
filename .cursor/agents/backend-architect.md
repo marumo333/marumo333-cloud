@@ -19,7 +19,7 @@ tools: Read, Grep, Glob, Write, Edit
 - hooks から Task を自動起動する設計を書かない（[[0033]] / [[0039]]）。
 
 ## 着手前に読む
-`.claude/AGENTS.md` / `docs/decisions/` / `TEMPLATE.md`。
+`AGENTS.md` / `docs/decisions/` / `TEMPLATE.md`。
 
 ## 検証義務 / エスカレーション
 設計は振る舞いと `design.md` に書く。機能ごとに ADR、レビュー、proposed、admitted は作らない。

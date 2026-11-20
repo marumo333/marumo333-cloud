@@ -11,7 +11,7 @@ function read(rel) {
 }
 
 test('親は4分類を1回行い、直すだけコードを変える', () => {
-	const skill = read('.claude/skills/adversarial-review/SKILL.md');
+	const skill = read('.cursor/skills/adversarial-review/SKILL.md');
 	assert.match(skill, /tsc --noEmit/);
 	assert.match(skill, /検証用の subagent は起動しない/);
 	assert.match(skill, /直す/);
@@ -19,6 +19,8 @@ test('親は4分類を1回行い、直すだけコードを変える', () => {
 	assert.match(skill, /記録/);
 	assert.match(skill, /却下/);
 	assert.match(skill, /二周目は開かない/);
+	assert.match(skill, /直すが 0 なら止める/);
+	assert.match(skill, /node scripts\/work-log\.mjs resume/);
 	assert.doesNotMatch(skill, /3体/);
 	assert.doesNotMatch(skill, /モード2/);
 });
@@ -53,40 +55,57 @@ test('CI は main の検査ロジックを PR ツリーに向け、policy は PR
 });
 
 test('席ルーティングは検証 subagent を出さない', () => {
-	const budget = read('.claude/skills/harness-api-budget/SKILL.md');
+	const budget = read('.cursor/skills/harness-api-budget/SKILL.md');
 	assert.match(budget, /verifier \/ reflector \/ 3体は起動しない/);
 	assert.match(budget, /新しい周で1回まで/);
 	assert.match(budget, /新しい周で0回/);
 });
 
 test('security-reviewer は毎タスクでは起動しない', () => {
-	const agent = read('.claude/agents/security-reviewer.md');
+	const agent = read('.cursor/agents/security-reviewer.md');
 	assert.match(agent, /毎タスクでは起動しない/);
 	assert.match(agent, /直す以外はコードを変えない/);
 	assert.doesNotMatch(agent, /必ず使う/);
 });
 
 test('セキュリティ・振る舞い・設計は1回の読みに含め、観点ごとに席を増やさない', () => {
-	const skill = read('.claude/skills/adversarial-review/SKILL.md');
+	const skill = read('.cursor/skills/adversarial-review/SKILL.md');
 	assert.match(skill, /セキュリティ/);
 	assert.match(skill, /振る舞い/);
 	assert.match(skill, /設計/);
 	assert.match(skill, /観点ごとに席は増やさない/);
 	assert.doesNotMatch(skill, /3体/);
-	const agent = read('.claude/agents/security-reviewer.md');
+	const agent = read('.cursor/agents/security-reviewer.md');
 	assert.match(agent, /振る舞い/);
 	assert.match(agent, /設計/);
 	assert.match(agent, /観点ごとに起動しない/);
-	const budget = read('.claude/skills/harness-api-budget/SKILL.md');
+	const budget = read('.cursor/skills/harness-api-budget/SKILL.md');
 	assert.match(budget, /観点ごとに席は増やさない/);
 	assert.match(budget, /3体のレビューは起動しない/);
 });
 
+test('画面の差分は親が実行し、追加のレビュー席は毎タスクでは起動しない', () => {
+	const canon = read('AGENTS.md');
+	assert.match(canon, /cycle\/runtime-verify\.jsonl/);
+	assert.match(canon, /code-review と security-reviewer は毎タスクでは起動しない/);
+	assert.match(canon, /レビュー subagent は起動しない/);
+	assert.match(canon, /エージェントのフォルダは `\.cursor\/` だけである/);
+	assert.doesNotMatch(canon, /同じ契約を使う/);
+	assert.match(read('.cursor/skills/verify/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
+	assert.match(read('.cursor/skills/verify/SKILL.md'), /マーカーが無い push は hook が拒否する/);
+	assert.match(read('docs/GLOSSARY.md'), /\| レビューマーカー \|/);
+	assert.match(read('.cursor/skills/adversarial-review/SKILL.md'), /cycle\/runtime-verify\.jsonl/);
+	assert.match(read('docs/GLOSSARY.md'), /\| 画面検証 \|/);
+	assert.match(read('AGENTS.md'), /Grok Bot を1回起動/);
+	assert.match(read('AGENTS.md'), /127\.0\.0\.1:8765/);
+	assert.match(read('.cursor/environment.json'), /verify-env-serve\.mjs/);
+});
+
 test('機械ゲートと親の3観点は人が頼まなくても走り、追加席だけが人を待つ', () => {
-	const skill = read('.claude/skills/adversarial-review/SKILL.md');
+	const skill = read('.cursor/skills/adversarial-review/SKILL.md');
 	assert.match(skill, /人がレビューを頼まなくても/);
 	assert.match(skill, /追加のモデル席だけ/);
-	const budget = read('.claude/skills/harness-api-budget/SKILL.md');
+	const budget = read('.cursor/skills/harness-api-budget/SKILL.md');
 	assert.match(budget, /人が頼まなくても行う/);
 	assert.match(budget, /追加のモデル席だけが人の明示を待つ/);
 	const template = read('TEMPLATE.md');

@@ -283,6 +283,47 @@ test('プロダクトの remote は --apply が無いと消さない', () => {
 	assert.equal(result.reset.includes('cycle/packets/C-0024.json'), true);
 });
 
+test('プロダクトの初期化は検証環境を未確認へ戻し、検証の記録を消す', () => {
+	const dir = root();
+	put(dir, 'policy/canon.rego', 'package harness.canon\n');
+	put(dir, 'package.json', JSON.stringify({ name: 'marumo-cloud' }));
+	put(dir, 'verify-env/index.html', '<p id="status">変更した</p>\n');
+	put(dir, 'cycle/events.jsonl', FRESH_EVENTS);
+	put(dir, 'cycle/runtime-verify.jsonl', '{}\n');
+	put(dir, 'cycle/verify-env.png', 'png');
+	put(dir, 'cycle/pr-review.jsonl', '{}\n');
+	const planned = runInit(dir, { product: true, origin: 'https://github.com/example/product' });
+	assert.equal(readFileSync(join(dir, 'verify-env/index.html'), 'utf8'), '<p id="status">変更した</p>\n');
+	assert.equal(planned.reset.includes('verify-env/index.html'), true);
+	assert.ok(planned.lines.some((line) => line.includes('削除は --apply が必要')));
+	const result = runInit(dir, {
+		product: true,
+		apply: true,
+		origin: 'https://github.com/example/product'
+	});
+	const html = readFileSync(join(dir, 'verify-env/index.html'), 'utf8');
+	assert.match(html, /<p id="status">未確認<\/p>/);
+	assert.equal(html.includes('変更した'), false);
+	assert.equal(existsSync(join(dir, 'cycle/runtime-verify.jsonl')), false);
+	assert.equal(existsSync(join(dir, 'cycle/verify-env.png')), false);
+	assert.equal(existsSync(join(dir, 'cycle/pr-review.jsonl')), false);
+	assert.equal(result.reset.includes('verify-env/index.html'), true);
+	const kept = runInit(dir, {
+		product: true,
+		apply: true,
+		origin: 'https://github.com/marumo333/marumo333-cloud'
+	});
+	writeFileSync(join(dir, 'verify-env/index.html'), '<p id="status">変更した</p>\n');
+	const template = runInit(dir, {
+		product: true,
+		apply: true,
+		origin: 'https://github.com/marumo333/marumo333-cloud'
+	});
+	assert.equal(readFileSync(join(dir, 'verify-env/index.html'), 'utf8'), '<p id="status">変更した</p>\n');
+	assert.equal(template.reset.includes('verify-env/index.html'), false);
+	assert.equal(kept.ok, true);
+});
+
 test('プロダクトの remote は既にある用語集を空に戻さない', () => {
 	const dir = root();
 	put(dir, 'policy/canon.rego', 'package harness.canon\n');

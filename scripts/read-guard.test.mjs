@@ -40,7 +40,7 @@ test('ファイル名だけと件数だけの rg は止め、一致行は通す'
 });
 
 test('beforeReadFile は .tools を拒否する', () => {
-	const hook = join(ROOT, '.claude/hooks/block_env_read.mjs');
+	const hook = join(ROOT, '.cursor/hooks/block-env-read.mjs');
 	const r = spawnSync(process.execPath, [hook], {
 		input: JSON.stringify({ filePath: '.tools/opa', cwd: ROOT }),
 		encoding: 'utf8'
@@ -50,38 +50,38 @@ test('beforeReadFile は .tools を拒否する', () => {
 	assert.match(body.agent_message, /node_modules|\.tools/);
 });
 
-test('Claude と Codex の PreToolUse は exit 2 で止め、Cursor の JSON を返さない', () => {
-	const hook = join(ROOT, '.claude/hooks/block_env_read.mjs');
+test('シェルの .env 読みは JSON で拒否する', () => {
+	const hook = join(ROOT, '.cursor/hooks/block-env-read.mjs');
 	const r = spawnSync(process.execPath, [hook], {
 		input: JSON.stringify({
-			hook_event_name: 'PreToolUse',
 			cwd: ROOT,
-			tool_name: 'Bash',
-			tool_input: { command: 'cat .env' }
+			command: 'cat .env'
 		}),
 		encoding: 'utf8'
 	});
-	assert.equal(r.status, 2);
-	assert.match(r.stderr, /規約1/);
-	assert.doesNotMatch(r.stdout, /"permission"/);
+	assert.equal(r.status, 0);
+	const body = JSON.parse(r.stdout);
+	assert.equal(body.permission, 'deny');
+	assert.match(body.agent_message, /規約1/);
 });
 
 test('壊れた hook 入力は拒否し、典型以外の .env 読みは止めない', () => {
-	const hook = join(ROOT, '.claude/hooks/block_env_read.mjs');
+	const hook = join(ROOT, '.cursor/hooks/block-env-read.mjs');
 	const broken = spawnSync(process.execPath, [hook], { input: '{', encoding: 'utf8' });
 	assert.equal(broken.status, 2);
 	assert.match(broken.stderr, /壊れている/);
 	for (const command of ['grep . .env', 'awk 1 .env', 'python3 -c "open(\'.env\')"', 'cp .env x.txt']) {
 		const r = spawnSync(process.execPath, [hook], {
-			input: JSON.stringify({ hook_event_name: 'PreToolUse', tool_input: { command } }),
+			input: JSON.stringify({ command }),
 			encoding: 'utf8'
 		});
 		assert.equal(r.status, 0, command);
+		assert.equal(JSON.parse(r.stdout).permission, 'allow', command);
 	}
 });
 
 test('複数段の .env 書き込みは拒否し、example と sample は通す', () => {
-	const hook = join(ROOT, '.claude/hooks/block_secret_write.mjs');
+	const hook = join(ROOT, '.cursor/hooks/block-secret-write.mjs');
 	for (const filePath of ['.env.production.local', 'deploy/.env.staging.local', '.envrc']) {
 		const denied = spawnSync(process.execPath, [hook], {
 			input: JSON.stringify({ tool_input: { file_path: filePath, content: 'A=1\n' } }),
@@ -100,7 +100,7 @@ test('複数段の .env 書き込みは拒否し、example と sample は通す'
 });
 
 test('秘密の書き込みは src 以外も止める', () => {
-	const hook = join(ROOT, '.claude/hooks/block_secret_write.mjs');
+	const hook = join(ROOT, '.cursor/hooks/block-secret-write.mjs');
 	const value = 'sk-' + 'a'.repeat(20);
 	const r = spawnSync(process.execPath, [hook], {
 		input: JSON.stringify({

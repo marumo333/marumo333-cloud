@@ -257,7 +257,7 @@ test('手順の差分に禁則キーか日記の写しがあるとゲートの�
 	assert.deepEqual(assessProcedure(root).keys, ['learnings']);
 	writeFileSync(join(root, 'TEMPLATE.md'), `${diary}\n`);
 	assert.equal(assessProcedure(root).diary, true);
-	mkdirSync(join(root, '.claude', 'skills', 'cycle'), { recursive: true });
-	symlinkSync(join(root, 'docs', 'learnings.md'), join(root, '.claude', 'skills', 'cycle', 'SKILL.md'));
+	mkdirSync(join(root, '.cursor', 'skills', 'cycle'), { recursive: true });
+	symlinkSync(join(root, 'docs', 'learnings.md'), join(root, '.cursor', 'skills', 'cycle', 'SKILL.md'));
 	assert.throws(() => assessProcedure(root), /symlink/);
 });

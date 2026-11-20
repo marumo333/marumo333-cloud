@@ -5,6 +5,10 @@ node_modules/
 !.cursor/hooks.json
 !.cursor/hooks/
 !.cursor/hooks/**
+!.cursor/skills/
+!.cursor/skills/**
+!.cursor/agents/
+!.cursor/agents/**
 !.cursor/log_subagent_model.mjs
 .claude/settings.local.json
 cycle/packets/**

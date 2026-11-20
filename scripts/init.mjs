@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { INITIAL_VERIFY_ENV_HTML } from './lib/verify-env-page.mjs';
 
 const SCAFFOLD = {
 	'AGENTS.md': '# 作業合意\n\n短い合意だけを書く。\n',
@@ -232,7 +233,27 @@ function resetAccumulation(root, apply) {
 		}
 		touched.push('docs/GLOSSARY.md');
 	}
-	return touched;
+	return [...touched, ...resetVerifyEnv(root, apply)];
+}
+
+function resetVerifyEnv(root, apply) {
+	const rel = 'verify-env/index.html';
+	const path = join(root, rel);
+	let current = '';
+	if (existsSync(path)) {
+		const st = lstatSync(path);
+		if (st.isSymbolicLink() || !st.isFile()) {
+			if (apply) rmSync(path);
+		} else {
+			current = readFileSync(path, 'utf8');
+		}
+	}
+	if (current === INITIAL_VERIFY_ENV_HTML) return [];
+	if (apply) {
+		mkdirSync(dirname(path), { recursive: true });
+		writeFileSync(path, INITIAL_VERIFY_ENV_HTML);
+	}
+	return [rel];
 }
 
 function accumulationLines(reset, touched, apply) {
