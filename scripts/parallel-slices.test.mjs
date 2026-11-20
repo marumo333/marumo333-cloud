@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { planParallelSlices } from './lib/parallel-slices.mjs';
+import { hasForeignModel, planParallelSlices } from './lib/parallel-slices.mjs';
 import { DISPATCH_CAP } from './lib/review-cap.mjs';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -17,14 +17,15 @@ function plan(tasks, extra = {}) {
 	);
 }
 
-test('生きた yaml に製品スラッグが無いとき同時実行できる', () => {
-	assert.doesNotMatch(routingText, /grok-\d|claude-[a-z0-9]/);
+test('生きた yaml が grok-4.7-xhigh のとき同時実行できる', () => {
+	assert.match(routingText, /grok-4\.7-xhigh/);
+	assert.equal(hasForeignModel(routingText), false);
 	const got = plan([{ id: 'a', files: ['src/a.js'] }]);
 	assert.equal(got.ok, true);
-	assert.equal(got.model, null);
+	assert.equal(got.model, 'grok-4.7-xhigh');
 });
 
-test('重ならない書き込みはホストの既定で同時に進み、PR は 1 本', () => {
+test('重ならない書き込みは grok-4.7-xhigh で同時に進み、PR は 1 本', () => {
 	const got = plan([
 		{ id: 'a', files: ['src/a.js'] },
 		{ id: 'b', files: ['./src/b.js'] },
@@ -32,7 +33,7 @@ test('重ならない書き込みはホストの既定で同時に進み、PR �
 	]);
 	assert.equal(got.ok, true);
 	assert.equal(got.pr_count, 1);
-	assert.equal(got.model, null);
+	assert.equal(got.model, 'grok-4.7-xhigh');
 	assert.deepEqual(
 		got.concurrent.map((t) => t.id),
 		['a', 'b', 'c']
@@ -93,7 +94,7 @@ test('枝分けと PR の分割は拒否する', () => {
 test('実装スライスにモデルを書かない', () => {
 	assert.equal(
 		plan([{ id: 'a', files: ['src/a.js'], model: 'claude-opus-5-5-high' }]).error,
-		'モデルは指定しない'
+		'モデルは grok-4.7-xhigh'
 	);
 	assert.equal(
 		plan([{ id: 'a', files: ['src/a.js'], seat: 'opus' }]).error,
@@ -101,16 +102,38 @@ test('実装スライスにモデルを書かない', () => {
 	);
 	assert.equal(
 		plan([{ id: 'a', files: ['src/a.js'], model: 'grok-4.7-xhigh' }]).error,
-		'モデルは指定しない'
+		'モデルは grok-4.7-xhigh'
 	);
 	assert.equal(
 		plan([{ id: 'a', files: ['src/a.js'], model: 'grok-4.7' }]).error,
-		'モデルは指定しない'
+		'モデルは grok-4.7-xhigh'
 	);
 	assert.equal(
 		plan([{ id: 'a', files: ['src/a.js'], model: 'host-default' }]).error,
-		'モデルは指定しない'
+		'モデルは grok-4.7-xhigh'
 	);
+	assert.equal(
+		planParallelSlices(
+			{ plan_confirm: { status: 'approved' }, tasks: [{ id: 'a', files: ['src/a.js'] }] },
+			{ routingText: 'model: claude-opus-5-5-high\n' }
+		).error,
+		'モデルは grok-4.7-xhigh'
+	);
+	for (const routingText of [
+		'model: cursor-grok-4.7-xhigh\n',
+		'model: grok-4.7-xhigh-fast\n',
+		'model: grok-4.7-xhigh\nextra: cursor-grok-4.7-xhigh\n'
+	]) {
+		assert.equal(
+			planParallelSlices(
+				{ plan_confirm: { status: 'approved' }, tasks: [{ id: 'a', files: ['src/a.js'] }] },
+				{ routingText }
+			).error,
+			'モデルは grok-4.7-xhigh',
+			routingText
+		);
+	}
+	assert.equal(hasForeignModel('model: grok-4.7-xhigh\nmodel: grok-4.7-xhigh\n'), false);
 });
 
 test('読み取りと依存は同時実行に入らない', () => {

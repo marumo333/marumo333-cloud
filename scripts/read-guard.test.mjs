@@ -142,5 +142,5 @@ test('learnings の席記述は当時と現行ピンを分ける', () => {
 	assert.match(line, /grok-4\.7-high/);
 	const routing = readFileSync(join(ROOT, 'cycle/model-routing.yaml'), 'utf8');
 	assert.doesNotMatch(routing, /grok-4\.7-high/);
-	assert.match(routing, /host-default/);
+	assert.match(routing, /grok-4\.7-xhigh/);
 });

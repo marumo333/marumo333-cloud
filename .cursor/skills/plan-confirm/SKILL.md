@@ -6,7 +6,7 @@ description: 重ならないスライスの前の計画確定レビュー（back
 # plan-confirm skill（[[0033]] / [[0037]] / [[0047]]）
 
 **適用範囲**: `parallel-dispatch`（ファイルが重ならないスライスを同時に進める）の**直前のみ必須**。重なるファイルを親が書く修正では省略可。
-この skill は重ならないスライスの前だけ使う。レビュー subagent はここから出さない（[[0051]]）。完成は 1 本の PR。モデル ID は指定しない。
+この skill は重ならないスライスの前だけ使う。レビュー subagent はここから出さない（[[0051]]）。完成は 1 本の PR。モデルは grok-4.7-xhigh。
 
 ## 手順
 
@@ -15,7 +15,7 @@ description: 重ならないスライスの前の計画確定レビュー（back
    - policy / cycle の再起 / 正本パスの変更
    - 複数 skill・policy にまたがる横断変更
    - hooks や GitHub Actions の強制点
-3. `backend-architect` を **Task（ホストの既定・新しい文脈）**で起動。モデル ID は渡さない。入力は**計画 md のみ**（＋必要なら関連 ADR パス）。
+3. `backend-architect` を **Task（grok-4.7-xhigh・新しい文脈）**で起動。`model` は grok-4.7-xhigh。入力は**計画 md のみ**（＋必要なら関連 ADR パス）。
    会話履歴は渡さない。実装禁止。
    - 非 C: 「壊せ／抜け／リスク。承認か差し戻しのみ」
    - C: 上記＋「境界・正本・再起の有界性・ADR 要否。設計不足なら差し戻し」

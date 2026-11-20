@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { hasForeignModel } from './lib/parallel-slices.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -16,9 +17,6 @@ function frontmatter(rel) {
 	assert.ok(end > 0, `${rel} に frontmatter が無い`);
 	return text.slice(0, end);
 }
-
-/** ホストのモデル ID。席の役割名は含めない。 */
-const PRODUCT_SLUG = /grok-\d|claude-[a-z0-9]|gpt-\d|gemini-|muse-spark-|cursor-grok|Grok \d|Fable \d|Opus \d/;
 
 const LIVING = [
 	'cycle/model-routing.yaml',
@@ -39,11 +37,11 @@ const LIVING = [
 	'docs/architecture/host-entry-as-is-to-be.mmd'
 ];
 
-test('どの agent の frontmatter にも model を置かない', () => {
+test('どの agent の frontmatter の model も grok-4.7-xhigh', () => {
 	const agents = readdirSync(join(ROOT, '.cursor/agents')).filter((name) => name.endsWith('.md'));
 	assert.deepEqual(agents.sort(), ['backend-architect.md', 'security-reviewer.md']);
 	for (const name of agents) {
-		assert.doesNotMatch(frontmatter(`.cursor/agents/${name}`), /^model:/m, name);
+		assert.match(frontmatter(`.cursor/agents/${name}`), /^model: grok-4\.7-xhigh$/m, name);
 	}
 	assert.equal(existsSync(join(ROOT, '.cursor/agents/verifier.md')), false);
 	assert.equal(existsSync(join(ROOT, '.cursor/agents/reflector.md')), false);
@@ -52,21 +50,26 @@ test('どの agent の frontmatter にも model を置かない', () => {
 	assert.match(read('.cursor/skills/reflect/SKILL.md'), /起動しない/);
 });
 
-test('生きた契約に製品スラッグを書かず、席は役割だけ', () => {
+test('生きた契約の製品スラッグは grok-4.7-xhigh だけ', () => {
 	for (const rel of LIVING) {
-		assert.doesNotMatch(read(rel), PRODUCT_SLUG, rel);
+		const text = read(rel);
+		assert.match(text, /grok-4\.7-xhigh/, rel);
+		assert.equal(hasForeignModel(text), false, rel);
 	}
 	const routing = read('cycle/model-routing.yaml');
-	assert.match(routing, /host-default/);
+	assert.match(routing, /model: grok-4\.7-xhigh/);
+	assert.match(routing, /parent_chat: grok-4\.7-xhigh/);
+	assert.match(routing, /implement_seat: grok-4\.7-xhigh/);
 	assert.match(routing, /parent: parent/);
-	assert.doesNotMatch(routing, /\b(grok|fable|opus|muse)\b/);
 	assert.doesNotMatch(routing, /fable_pin/);
 	assert.doesNotMatch(routing, /sonnet_pin/);
 	assert.doesNotMatch(routing, /grok_task:/);
+	assert.doesNotMatch(routing, /host-default/);
 	assert.match(read('docs/decisions/0049-grok47-opus55-generation.md'), /grok-4\.7-high/);
+	assert.match(read('docs/decisions/0049-grok47-opus55-generation.md'), /grok-4\.7-xhigh/);
 	assert.match(read('docs/multi-agent-and-pins.md'), /arXiv:2503\.13657/);
 	assert.match(read('docs/multi-agent-and-pins.md'), /製品スラッグ/);
-	assert.match(read('docs/multi-agent-and-pins.md'), /ホストの既定/);
+	assert.match(read('docs/multi-agent-and-pins.md'), /grok-4\.7-xhigh/);
 	assert.match(read('README.md'), /docs\/multi-agent-and-pins\.md/);
 });
 
@@ -97,9 +100,9 @@ test('commit hook はホストを聞かず、クラウドも手元も質問し�
 	assert.match(pins, /commit hook はホストを聞かない/);
 	assert.match(pins, /プロバイダとモデルは聞かない/);
 	assert.doesNotMatch(pins, /一度だけ選ぶ/);
-	assert.match(pins, /共有の yaml には書かない/);
+	assert.match(pins, /共有の yaml に書く/);
 	assert.match(pins, /入口は `\.cursor\/hooks\.json` とルートの `AGENTS\.md`/);
-	assert.match(pins, /ホスト名を yaml に書いてモデル ID を割り当てない/);
+	assert.match(pins, /共有の yaml のモデルは grok-4\.7-xhigh/);
 });
 
 test('エージェントの入口は .cursor だけである', () => {
@@ -108,7 +111,7 @@ test('エージェントの入口は .cursor だけである', () => {
 	assert.equal(existsSync(join(ROOT, '.codex')), false);
 	assert.equal(existsSync(join(ROOT, '.agents')), false);
 	const agents = read('AGENTS.md');
-	assert.match(agents, /モデル ID は指定しない/);
+	assert.match(agents, /モデルは grok-4\.7-xhigh/);
 	assert.match(agents, /エージェントのフォルダは `\.cursor\/` だけである/);
 	assert.match(agents, /Cursor のクラウドで閉じる/);
 	assert.doesNotMatch(agents, /このリポジトリは Cursor ハーネスのテンプレート/);
@@ -122,11 +125,11 @@ test('エージェントの入口は .cursor だけである', () => {
 	assert.match(hostFig, /cycle と docs/);
 	assert.match(hostFig, /クラウドも手元も質問しない/);
 	assert.doesNotMatch(hostFig, /一度だけ選ぶ/);
-	assert.match(hostFig, /共有 yaml には書かない/);
 	assert.match(hostFig, /CLAUDE.md は置かない/);
-	assert.match(hostFig, /実行モデルはホストの既定/);
+	assert.match(hostFig, /実行モデルは grok-4\.7-xhigh/);
+	assert.match(hostFig, /共有 yaml は grok-4\.7-xhigh/);
 	assert.match(hostFig, /yaml が製品スラッグを名指し/);
-	assert.doesNotMatch(hostFig, PRODUCT_SLUG);
+	assert.equal(hasForeignModel(hostFig), false);
 	assert.match(read('README.md'), /docs\/architecture\/host-entry-as-is-to-be\.gif/);
 	assert.match(read('README.md'), /git clone のあと初期化/);
 	assert.match(read('README.md'), /cycle\/events\.jsonl/);
@@ -150,28 +153,28 @@ test('エージェントの入口は .cursor だけである', () => {
 	assert.match(read('.cursor/hooks.json'), /block-env-read\.mjs/);
 });
 
-test('重ならないスライスは計画確認のあとホストの既定で同時に進める', () => {
+test('重ならないスライスは計画確認のあと grok-4.7-xhigh で同時に進める', () => {
 	const agents = read('AGENTS.md');
-	assert.match(agents, /ファイルが重ならないスライスはホストの既定で同時に進めるのが既定/);
-	assert.match(agents, /モデル ID は指定しない/);
+	assert.match(agents, /ファイルが重ならないスライスは grok-4\.7-xhigh で同時に進めるのが既定/);
+	assert.match(agents, /モデルは grok-4\.7-xhigh/);
 	assert.match(agents, /重なるファイルは親が書く/);
 	assert.match(agents, /枝に分けて後からマージする十数体は入れない/);
 	assert.match(agents, /完成は 1 本の PR/);
 	assert.doesNotMatch(agents, /実装: TDD。親が書く。/);
 
 	const dispatch = read('.cursor/skills/parallel-dispatch/SKILL.md');
-	assert.match(dispatch, /ホストの既定/);
-	assert.match(dispatch, /モデルは指定しない/);
+	assert.match(dispatch, /grok-4\.7-xhigh/);
+	assert.match(dispatch, /スライスにモデルは書かない/);
 	assert.match(dispatch, /重なるファイルは親が書く/);
 	assert.match(dispatch, /完成は 1 本の PR/);
 	assert.doesNotMatch(dispatch, /作業ツリー分離/);
 	assert.doesNotMatch(dispatch, /best-of-n/);
 
 	const budget = read('.cursor/skills/harness-api-budget/SKILL.md');
-	assert.match(budget, /重ならないスライスを同時に進める既定/);
+	assert.match(budget, /重ならないスライスを grok-4\.7-xhigh で同時に進める既定/);
 	assert.match(budget, /重なるファイルの実装/);
 	assert.match(budget, /完成は 1 本の PR/);
-	assert.match(budget, /モデル ID は指定しない/);
+	assert.match(budget, /モデルは grok-4\.7-xhigh/);
 
 	const pins = read('docs/multi-agent-and-pins.md');
 	assert.match(pins, /重なるファイルは親が書く/);
@@ -181,6 +184,6 @@ test('重ならないスライスは計画確認のあとホストの既定で�
 	const readme = read('README.md');
 	assert.match(readme, /重なるファイルは親が書く/);
 	assert.match(readme, /完成は 1 本の PR/);
-	assert.match(readme, /ホストの既定/);
+	assert.match(readme, /grok-4\.7-xhigh/);
 	assert.match(readme, /docs\/multi-agent-and-pins\.md/);
 });

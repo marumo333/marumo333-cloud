@@ -2,9 +2,9 @@
 flowchart LR
   subgraph seats["席"]
     direction TB
-    G["親（ホストの既定）"]
+    G["親（grok-4.7-xhigh）"]
     IMP["検証は親。重なるファイルも親"]
-    PAR["重ならないスライスはホストの既定"]
+    PAR["重ならないスライスは grok-4.7-xhigh"]
     Rec["cycle-record"]
     BA["追加席は人が明示したとき"]
     OFF["verifier と reflector は起動しない"]

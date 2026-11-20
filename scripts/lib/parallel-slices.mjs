@@ -1,10 +1,13 @@
 /**
- * 計画確認のあと、ファイルが重ならない書き込みだけをホストの既定で同時に進める。
- * モデル ID は指定しない。重なるファイルは親が書く。枝分けと PR の分割は拒否する。
+ * 計画確認のあと、ファイルが重ならない書き込みだけを grok-4.7-xhigh で同時に進める。
+ * スライスにモデルは書かない。重なるファイルは親が書く。枝分けと PR の分割は拒否する。
  * 同時に進む実装エージェントの数値上限は無い。数は重ならないスライスの数。
  */
 
-const PRODUCT_SLUG = /grok-\d|claude-[a-z0-9]|gpt-\d|gemini-|muse-spark-|cursor-grok/;
+export const MODEL_PIN = 'grok-4.7-xhigh';
+
+const SLUG_TOKEN =
+	/[A-Za-z0-9.-]*(?:grok-\d|claude-[a-z0-9]|gpt-\d|gemini-|muse-spark-|cursor-grok|Grok \d|Fable \d|Opus \d)[A-Za-z0-9.-]*/g;
 
 function empty(error) {
 	return {
@@ -48,9 +51,16 @@ function taskFiles(task) {
 	return files.map(normPath).filter(Boolean);
 }
 
+/** ピン以外の製品スラッグ、またはピンが無いとき true。接頭辞と接尾辞も別スラッグにする。 */
+export function hasForeignModel(text) {
+	const found = String(text ?? '').match(new RegExp(SLUG_TOKEN.source, 'g')) ?? [];
+	if (!found.includes(MODEL_PIN)) return true;
+	return found.some((token) => token !== MODEL_PIN);
+}
+
 function forbiddenModel(model) {
 	if (model == null || model === '') return '';
-	return 'モデルは指定しない';
+	return 'モデルは grok-4.7-xhigh';
 }
 
 /**
@@ -72,8 +82,8 @@ export function planParallelSlices(input, opts = {}) {
 		return empty('完成は 1 本の PR');
 	}
 
-	if (opts.routingText && PRODUCT_SLUG.test(String(opts.routingText))) {
-		return empty('モデルは指定しない');
+	if (opts.routingText != null && hasForeignModel(opts.routingText)) {
+		return empty('モデルは grok-4.7-xhigh');
 	}
 
 	const tasks = Array.isArray(plan.tasks) ? plan.tasks : null;
@@ -141,7 +151,7 @@ export function planParallelSlices(input, opts = {}) {
 		ok: true,
 		error: '',
 		pr_count: 1,
-		model: null,
+		model: MODEL_PIN,
 		concurrent,
 		parent,
 		later

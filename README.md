@@ -18,7 +18,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 ## 何をするか
 
-- 席: 親はホストの既定。モデル ID は指定しない。検証は親が契約と feature-gate を実行する。検証用の subagent は出さない
+- 席: 親は grok-4.7-xhigh。検証は親が契約と feature-gate を実行する。検証用の subagent は出さない
 - 機能の正本は `features/<slug>/` の振る舞いとテスト。機能ごとに ADR、レビュー、proposed、admitted は作らない
 - ゲート: OPA `node scripts/feature-gate.mjs`（自己改善ループそのものではない）
 - 管理: skill の使用/省略を `cycle/` に書き、ノード / 辺 / 状態の3指標で計る
@@ -32,11 +32,11 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 開発は Cursor のクラウドに統一する。画面を閉じるのは Grok Bot だけである。契約は [`AGENTS.md`](AGENTS.md)。入口は `.cursor/hooks.json` と `AGENTS.md` と `.cursor/environment.json`。スキルと agent は `.cursor/` にある。
 
-`CLAUDE.md` は置かない。`pnpm install` は git hooks を入れる。クラウドも手元もプロバイダとモデルは聞かない。実行はホストの既定。
+`CLAUDE.md` は置かない。`pnpm install` は git hooks を入れる。クラウドも手元もプロバイダとモデルは聞かない。実行モデルは grok-4.7-xhigh。
 
 ## 最初にやること
 
-どのホストでも clone 後は `pnpm install`（git hooks も入る）。プロバイダとモデルは聞かない。実行はホストの既定。プロダクトの始め方は [TEMPLATE.md](TEMPLATE.md) の「プロダクトを始める」。機能ごとに ADR は起票しない。
+どのホストでも clone 後は `pnpm install`（git hooks も入る）。プロバイダとモデルは聞かない。実行モデルは grok-4.7-xhigh。プロダクトの始め方は [TEMPLATE.md](TEMPLATE.md) の「プロダクトを始める」。機能ごとに ADR は起票しない。
 
 空リポへ載せる手順は [TEMPLATE.md](TEMPLATE.md)。
 完了はクラウドまたは Actions 上で `node scripts/feature-gate.mjs` が緑であること。ハーネスにテストがある変更は `pnpm test` が緑であること（[ADR 0016](docs/decisions/0016-definition-of-done.md)）。
@@ -46,7 +46,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 このハーネスは席・ゲート・cycle で回る。入力は人間の依頼と `features/<slug>/` の振る舞い、
 実行は席、token効率化は code-mode と packet、品質ゲートは hooks / OPA / feature-gate、
 成果は振る舞いのテストと `docs/decisions/` と policy、フィードバックは次の cycle である。
-監査の主体は親である。モデル ID は指定しない。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧はハーネスの正本で、差分がそこを含むと stay を拒否する。被覆率にはしない。`features/` と `src/` と `app/` の差分は、振る舞いのテストと `tsc --noEmit` を見る。正本へは書かない。
+監査の主体は親である。モデルは grok-4.7-xhigh。Uber の Gateway や艦隊は置かない。feature-gate は OPA の検査と契約とレビュー上限を実行する。canon の一覧はハーネスの正本で、差分がそこを含むと stay を拒否する。被覆率にはしない。`features/` と `src/` と `app/` の差分は、振る舞いのテストと `tsc --noEmit` を見る。正本へは書かない。
 
 図は [`docs/architecture/`](docs/architecture/) のアーキテクチャ概要。実線は実行、破線は条件付きか判定のみ。編集する正は同ディレクトリの mermaid（[`review-overview.mmd`](docs/architecture/review-overview.mmd) ほか）。README には画像だけを出す。
 
@@ -56,7 +56,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 初期化のコマンドは `node scripts/init.mjs --product` である。これは消すファイルの一覧を出すだけで、ファイルは残す。プロダクトの remote で実際に戻すのは `node scripts/init.mjs --product --apply` だけである。そのとき `cycle/events.jsonl` は空の `C-0001` になり、正本の yaml は残る。`docs/` は日付付きの日記と、決定以外の調査や図を落とす。`docs/decisions/` は残す。このテンプレートの remote では消さない。フォークしただけでは消えない。
 
-依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。入口は `AGENTS.md` と `.cursor/` を読む。実行はホストの既定。答えは共有の yaml には書かない。
+依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。入口は `AGENTS.md` と `.cursor/` を読む。実行モデルは grok-4.7-xhigh。答えは共有の yaml に書く。
 
 モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。枝が `cycle/` の記録用 PR をマージしても、次の記録用 PR は開かない。
 
@@ -64,9 +64,9 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 ### モデルとレビュー
 
-常時の席は親である。実行モデルはホストの既定。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が4つに分ける。コードを変えるのは直すだけ。直すが残るあいだ同じ直すだけを繰り返し、0 で止める。新しい指摘を探す二周目は開かない。要件または設計を決めたあとは実装を閉じ、途中の残りは作業ログに残す。backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
+常時の席は親である。実行モデルは grok-4.7-xhigh。計画確認のあと、ファイルが重ならないスライスは grok-4.7-xhigh で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が4つに分ける。コードを変えるのは直すだけ。直すが残るあいだ同じ直すだけを繰り返し、0 で止める。新しい指摘を探す二周目は開かない。要件または設計を決めたあとは実装を閉じ、途中の残りは作業ログに残す。backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
 
-モデル ID は指定しない。役割と effort は `cycle/model-routing.yaml` に残す。ゲートが見るのは席トークンと件数と effort の幅で、ホストの製品スラッグは見ない。どの agent の定義にも `model:` は置かない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
+モデルは grok-4.7-xhigh。役割と effort は `cycle/model-routing.yaml` に残す。ゲートが見るのは席トークンと件数と effort の幅で、yaml の製品スラッグは grok-4.7-xhigh だけを見る。どの agent の `model:` も grok-4.7-xhigh。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 
 実行の一覧は Cursor のクラウド実行面で見る。このリポジトリは席の許可とゲートである。数十体を `packet.rego` の席にはしない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 
