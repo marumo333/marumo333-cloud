@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * 人間が作業の PR をマージしたあと: 承認を記録し、3指標を測り、必要なら次 cycle の PR を開く。
- * 枝が cycle/ の記録用 PR では、承認も次周も書かない。
+ * 人間が作業の PR をマージしたあと: 承認を記録し、3指標を測り、必要なら次 cycle を追記する。
+ * 記録用の PR は開かない。枝が cycle/ のマージでは、承認も次周も書かない。
+ * 同じ merge_sha と PR 番号は二度書かない。
  * エージェントは起動しない（ADR 0033）。上限は policy/cycle.rego。
  */
 import { execFileSync } from 'node:child_process';
@@ -24,7 +25,7 @@ if (rawMergeSha && !/^[0-9a-f]{7,40}$/i.test(rawMergeSha)) {
 	console.error('[cycle-after-merge] MERGE_SHA は 7〜40 桁の十六進のみ');
 	process.exit(1);
 }
-const mergeSha = rawMergeSha;
+const mergeSha = rawMergeSha.toLowerCase();
 const prNumber = String(process.env.PR_NUMBER || '').replace(/[^\d]/g, '');
 const headRef = String(process.env.PR_HEAD_REF || process.env.GITHUB_HEAD_REF || '');
 if (headRef.startsWith('cycle/')) {
@@ -99,6 +100,18 @@ function openCyclePrExists() {
 }
 
 const evs = events();
+if (
+	mergeSha &&
+	evs.some(
+		(ev) =>
+			ev?.type === 'human_approved' &&
+			String(ev.merge_sha ?? '').toLowerCase() === mergeSha &&
+			String(ev.pr ?? '') === prNumber
+	)
+) {
+	console.error('[cycle-after-merge] このマージの承認は既にある');
+	process.exit(0);
+}
 const rawCycle = process.env.CYCLE_ID || latestOpenCycle(evs);
 const cycleId = CYCLE_RE.test(rawCycle) ? rawCycle : 'C-0001';
 const required = JSON.parse(readFileSync(join(ROOT, 'cycle/required-cycle.json'), 'utf8'));
@@ -135,12 +148,11 @@ console.log(JSON.stringify({ cycle: cycleId, metrics, pending, followups, openPr
 
 if (dryRun) process.exit(0);
 
-mkdirSync(dirname(EVENTS), { recursive: true });
-const next = [...evs];
-if (humanApproved) next.push(rec);
-
+/** @type {object[]} */
+const added = [];
+if (humanApproved) added.push(rec);
 if (!recurse) {
-	writeFileSync(EVENTS, `${next.map((e) => JSON.stringify(e)).join('\n')}\n`);
+	appendEvents(added);
 	console.error(`[cycle-after-merge] 次周は開かない: ${JSON.stringify(deny)}`);
 	process.exit(0);
 }
@@ -150,12 +162,23 @@ if (!CYCLE_RE.test(nxt)) {
 	console.error(`[cycle-after-merge] 次 cycle id が不正: ${nxt}`);
 	process.exit(1);
 }
-next.push({
+added.push({
 	t: new Date().toISOString(),
 	type: 'cycle_open',
 	cycle: nxt,
 	source: 'after-merge',
 	from: cycleId
 });
-writeFileSync(EVENTS, `${next.map((e) => JSON.stringify(e)).join('\n')}\n`);
+appendEvents(added);
 console.error(`[cycle-after-merge] ${nxt} を開いた。Feature は起票しない`);
+
+function appendEvents(rows) {
+	if (!rows.length) return;
+	mkdirSync(dirname(EVENTS), { recursive: true });
+	const current = existsSync(EVENTS) ? readFileSync(EVENTS, 'utf8') : '';
+	if (current.length > 0 && !current.endsWith('\n')) {
+		console.error('[cycle-after-merge] events.jsonl が改行で終わっていない。追記を拒否する');
+		process.exit(1);
+	}
+	writeFileSync(EVENTS, `${current}${rows.map((row) => JSON.stringify(row)).join('\n')}\n`);
+}

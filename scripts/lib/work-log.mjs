@@ -2,7 +2,7 @@
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { digestFromEntries, parseTree } from './pr-open.mjs';
+import { EVENTS_LOG, carriedFromEventsAppend, isEventsAppend, treeDigest } from './pr-open.mjs';
 import { SELF_REVIEW_CAP } from './review-disposition.mjs';
 
 export const WORK_LOG = 'cycle/work-log.jsonl';
@@ -130,19 +130,45 @@ function gitOut(root, args) {
 	});
 }
 
-export function workGapAt(root, sha) {
-	let rev = sha;
-	if (sha === 'HEAD' && gitOut(root, ['diff', '--cached', '--name-only']).trim()) {
-		rev = gitOut(root, ['write-tree']).trim();
-	}
-	const tree = gitOut(root, ['ls-tree', '-r', rev]);
-	let text = '';
+function workText(root, rev) {
 	try {
-		text = gitOut(root, ['show', `${rev}:${WORK_LOG}`]);
+		return gitOut(root, ['show', `${rev}:${WORK_LOG}`]);
 	} catch {
-		text = '';
+		return '';
 	}
-	return workGaps(text, digestFromEntries(parseTree(tree)));
+}
+
+function gapsOnRev(root, rev, seen) {
+	if (seen.has(rev)) return ['自己レビューが無い'];
+	seen.add(rev);
+	const gaps = workGaps(workText(root, rev), treeDigest(root, rev));
+	if (!gaps.length) return [];
+	if (carriedFromEventsAppend(root, rev, (parent, seenNow) => gapsOnRev(root, parent, seenNow), seen)) return [];
+	return gaps;
+}
+
+export function workGapAt(root, sha) {
+	if (sha === 'HEAD') {
+		const cached = gitOut(root, ['diff', '--cached', '--name-only'])
+			.split('\n')
+			.map((line) => line.trim())
+			.filter(Boolean);
+		if (cached.length) {
+			const rev = gitOut(root, ['write-tree']).trim();
+			const gaps = workGaps(workText(root, rev), treeDigest(root, rev));
+			if (!gaps.length) return [];
+			if (
+				cached.length === 1 &&
+				cached[0] === EVENTS_LOG &&
+				isEventsAppend(root, 'HEAD', rev) &&
+				gapsOnRev(root, 'HEAD', new Set()).length === 0
+			) {
+				return [];
+			}
+			return gaps;
+		}
+	}
+	return gapsOnRev(root, sha, new Set());
 }
 
 /**
