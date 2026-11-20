@@ -125,6 +125,27 @@ test('先に進んだマージ先の後ろへ追記する', () => {
 	assert.equal(git(work, ['rev-list', '--count', 'origin/main']).trim(), '4');
 });
 
+test('events.jsonl 以外の追跡ファイルは載せない', () => {
+	const { dir, work, bin } = repo();
+	writeFileSync(join(work, 'tracked.txt'), 'before\n');
+	git(work, ['add', 'tracked.txt']);
+	git(work, ['commit', '-m', 'chore: 追跡ファイルを試験に置く。']);
+	git(work, ['push', 'origin', 'HEAD:main']);
+	const child = join(dir, 'touch-tracked.mjs');
+	writeFileSync(
+		child,
+		`import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+writeFileSync(join(process.env.HARNESS_ROOT, 'tracked.txt'), 'after\\n');
+`
+	);
+	const before = git(work, ['rev-parse', 'origin/main']).trim();
+	const ran = land(work, bin, { HARNESS_LAND_TEST: '1', LAND_CHILD: child });
+	assert.equal(ran.status, 1, ran.stderr);
+	assert.match(ran.stderr, /events\.jsonl 以外は載せない/);
+	assert.equal(git(work, ['rev-parse', 'origin/main']).trim(), before);
+});
+
 test('書き換えはマージ先へ載せない', () => {
 	const { dir, work, bin } = repo();
 	const child = join(dir, 'rewrite.mjs');

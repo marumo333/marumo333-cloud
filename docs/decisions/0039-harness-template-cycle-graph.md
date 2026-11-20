@@ -15,12 +15,12 @@
   4. **再起は有界。** hooks から Task は起動しない（[[0033]]）。人間が作業の PR をマージしたあとだけ
      `cycle-after-merge` が承認と次周を、そのマージ先の `cycle/events.jsonl` へ直接載せる。
      記録用の PR は開かない。枝が `cycle/` のマージでは承認も次周も書かない。
-     省略/失敗が無い周、未マージの cycle PR、未処理の cycle-followup Feature、
-     または MERGED≠true なら開かない。空サイクルの integrity=0 だけでは再起しない。
+     未マージの cycle PR、未処理の cycle-followup Feature、または MERGED≠true なら開かない。
+     省略が無くても、人間がマージした周は次周を開く。空サイクルの integrity=0 だけでは再起しない。
      キー欠落は deny。`human_approved` は after-merge だけが書く。同じ merge_sha は二度書かない。
   5. **複製先の正本**は複製先の `knowledge/features/`。GitHub PR は鏡。テンプレートの使い方は `TEMPLATE.md`。
   6. **ハーネスを始める順。** clone → ADR で技術選定（テンプレート ADR を型に更新）→ Feature を proposed 起票
      → 起票 PR をマージ → 次 PR で実装。同一 PR で admitted にしない。実装から入らない。
-- 結果: 空リポに複製/送信して人間がマージすると、省略が残っている限り次票が起票される。
+- 結果: 人間が作業の PR をマージすると、承認をマージ先へ直接載せる。入場が通れば次周が開く。Feature 票は起票しない。
   エージェント実行そのものは人間または Cloud Agent 起動が必要（Task 自動点火はしない）。
 - 関連: [[0033-harness-api-budget-routing]] [[0038-feature-canon-opa-grow]] [[0016-definition-of-done]]
