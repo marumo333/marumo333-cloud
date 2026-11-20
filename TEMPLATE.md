@@ -53,4 +53,4 @@ node scripts/check-behavior.mjs
 
 1. 親はホストの既定。モデル ID は指定しない。検証と内省は親が行う。検証用の subagent は出さない。品質の機械ゲートは人が頼まなくても commit で走る。追加のモデル席は人が明示した1回だけ。検証環境は Cursor のクラウドが配り、親が Grok Bot を1回起動して操作する。記録が無いとゲートが失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
 2. 機能は `node scripts/start-feature.mjs <slug>` の振る舞いとテストで進める。
-3. 人間が作業の PR をマージすると次の cycle が開く。枝が `cycle/` の記録用 PR では開かない。Feature 票は開かない。エージェントは自動起動しない。
+3. 人間が作業の PR をマージすると承認をそのマージ先へ直接載せる。入場が通るとき次の cycle が開く。開いた `cycle/` の PR があるあいだは次周を開かない。記録用の PR は開かない。枝が `cycle/` のマージでは開かない。Feature 票は開かない。エージェントは自動起動しない。

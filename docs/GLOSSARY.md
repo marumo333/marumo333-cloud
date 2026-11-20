@@ -10,7 +10,7 @@
 | 親 | ホストの既定で、壁打ちと、重なるファイルの実装と、契約とゲートの実行と、画面の差分の操作と、内省と、cycle の記録を行う。 |
 | 正本 | 人が残す判断。置き場は `docs/decisions/` と `features/<slug>/`。 |
 | ゲート | `node scripts/feature-gate.mjs`。commit 前に通す。 |
-| cycle | 1周の記録。`cycle/events.jsonl` と `cycle/` の yaml。マージ後の追記は `cycle/` の PR で、その PR のマージでは次周を開かない。 |
+| cycle | 1周の記録。`cycle/events.jsonl` と `cycle/` の yaml。作業 PR のマージが承認であり、その記録はマージ先へ直接載る。記録用の PR は開かない。枝が `cycle/` のマージでは承認も次周も書かない。 |
 | packet | 子に渡す JSON。会話と `docs/learnings.md` の全文は継がない。 |
 | Feature 票 | 作らない。機能の作業は `features/<slug>/`。 |
 | ホストの既定 | 実行するモデルはホストが決める。共有の yaml にはモデル ID を書かない。 |

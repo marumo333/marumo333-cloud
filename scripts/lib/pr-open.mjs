@@ -61,13 +61,18 @@ function showPath(root, rev, path) {
 }
 
 /** 旧い本文がそのまま先頭に残り、増分は改行で終わる行だけ。 */
+export function eventsAreAppend(before, after) {
+	if (typeof before !== 'string' || typeof after !== 'string') return false;
+	if (after.length <= before.length || !after.startsWith(before)) return false;
+	if (before.length > 0 && !before.endsWith('\n')) return false;
+	return after.endsWith('\n');
+}
+
 export function isEventsAppend(root, from, to) {
 	const before = showPath(root, from, EVENTS_LOG) ?? '';
 	const after = showPath(root, to, EVENTS_LOG);
 	if (after == null) return false;
-	if (after.length <= before.length || !after.startsWith(before)) return false;
-	if (before.length > 0 && !before.endsWith('\n')) return false;
-	return after.endsWith('\n');
+	return eventsAreAppend(before, after);
 }
 
 /**

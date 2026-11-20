@@ -22,7 +22,7 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 - 機能の正本は `features/<slug>/` の振る舞いとテスト。機能ごとに ADR、レビュー、proposed、admitted は作らない
 - ゲート: OPA `node scripts/feature-gate.mjs`（自己改善ループそのものではない）
 - 管理: skill の使用/省略を `cycle/` に書き、ノード / 辺 / 状態の3指標で計る
-- 再起: 人間がマージすると次の cycle が開く。Feature 票は開かない。エージェントは自動起動しない
+- 再起: 人間が作業の PR をマージすると承認をマージ先へ直接載せる。入場が通れば次の cycle が開く。記録用の PR は開かない。Feature 票は開かない。エージェントは自動起動しない
 - パッケージ: pnpm（[ADR 0041](docs/decisions/0041-pnpm-package-manager.md)）
 - commit: hook 必須。主語は `feat:` / `fix:` / `docs:` 等 + 日本語（[ADR 0042](docs/decisions/0042-always-on-precommit-ja-conventional.md)）
 
@@ -58,13 +58,13 @@ commit ガードは `--no-verify` と `-n` に加え、同じコマンドの単�
 
 依存の `pnpm install` は git hooks を書く。クラウドも手元もプロバイダとモデルは聞かない。入口は `AGENTS.md` と `.cursor/` を読む。実行はホストの既定。答えは共有の yaml には書かない。
 
-モデルとレビューのあと、人間が作業の PR をマージすると次の cycle が開く。記録は `cycle/events.jsonl` への PR であり、main へは直接 push しない。枝が `cycle/` の記録用 PR をマージしても、次の記録用 PR は開かない。
+モデルとレビューのあと、人間が作業の PR をマージすると承認をそのマージ先の `cycle/events.jsonl` へ直接載せる。入場が通るとき次の cycle が開く。開いた `cycle/` の PR があるあいだは次周を開かない。記録用の PR は開かない。枝が `cycle/` のマージでは、承認も次周も書かない。
 
 ![入口の as-is と to-be](docs/architecture/host-entry-as-is-to-be.gif)
 
 ### モデルとレビュー
 
-常時の席は親である。実行モデルはホストの既定。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が4つに分ける。コードを変えるのは直すだけ。直すが残るあいだ同じ直すだけを繰り返し、0 で止める。新しい指摘を探す二周目は開かない。要件または設計を決めたあとは実装を閉じ、途中の残りは作業ログに残す。backend-architect は重ならないスライスの前だけ、security-reviewer は人が明示した1回だけ。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
+常時の席は親である。実行モデルはホストの既定。計画確認のあと、ファイルが重ならないスライスはホストの既定で同時に進めるのが既定。重なるファイルは親が書く。枝に分けて後からマージする十数体は入れない。完成は 1 本の PR。型の正解は `tsc --noEmit`。品質の指摘は親が4つに分ける。コードを変えるのは直すだけ。直すが残るあいだ同じ直すだけを繰り返し、0 で止める。新しい指摘を探す二周目は開かない。要件または設計を決めたあとは実装を閉じ、途中の残りは作業ログに残す。backend-architect は重ならないスライスの前だけ。code-review は PR の前に親が1回読み、security-reviewer もその1回を起動する。追加の席は人が明示した1回まで。verifier と reflector は起動せず、feature-gate が 0 回で拒否する。検証環境は Cursor のクラウドが `start` で配る。親は Grok Bot を1回起動して操作し、スクリーンショットか録画を `cycle/runtime-verify.jsonl` に残す。無いと feature-gate が失敗する。code-review と security-reviewer は毎タスクでは起動しない。PR を開く前のマーカーが無い push は hook が拒否する。
 
 モデル ID は指定しない。役割と effort は `cycle/model-routing.yaml` に残す。ゲートが見るのは席トークンと件数と effort の幅で、ホストの製品スラッグは見ない。どの agent の定義にも `model:` は置かない。根拠は [モデルの層と並列実行](docs/multi-agent-and-pins.md)。
 
@@ -90,7 +90,7 @@ hooks を踏むのは実装の commit。feature-gate は判定であり正本へ
 
 ### 再起的自己改善
 
-人間のマージが点火する。cycle-after-merge は承認を記録し、次の cycle を開く。記録の commit は PR にする。main へは直接 push しない。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
+人間のマージが点火する。cycle-after-merge は承認を記録し、入場が通るとき次の cycle を開く。記録はマージ先へ直接載る。記録用の PR は開かない。開いた `cycle/` の PR があるあいだは次周を開かない。Feature 票は作らない。エージェントは自動起動しない。正本に残るのは `docs/decisions` と `features/<slug>/` だけ。
 
 ![再起的自己改善](docs/architecture/self-improve-flow.gif)
 
