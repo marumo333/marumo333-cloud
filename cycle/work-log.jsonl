@@ -11,3 +11,8 @@
 {"kind":"self-review","sha256":"5abbb76882f6888f1f110d4ce4f38723af7c43017d349f6b84a6298a8f7a4fd4","fix":0,"pass":1,"left":[]}
 {"kind":"self-review","sha256":"0aba61d5b025fa3adea23a1f018524146550819ae70eb108bab66a16c6fd5bf6","fix":0,"pass":1,"left":[]}
 {"kind":"self-review","sha256":"669760680c456854767077e5f2e52c68d16503f390879de56e499de861771324","fix":0,"pass":1,"left":[]}
+{"kind":"decided","what":"要件","left":["実装","自己レビュー","検証"]}
+{"kind":"progress","left":["自己レビュー","検証"]}
+{"kind":"done","left":[]}
+{"kind":"self-review","sha256":"1749e91825f211185860d75a40c741c2e7e6057873c1eb12d4fa6380e136ce61","fix":0,"pass":1,"left":[]}
+{"kind":"self-review","sha256":"1f748cf5b7495090cda63f4fc3be96da1987f15c03f3c95c5a771e071c8c93f3","fix":0,"pass":1,"left":[]}
