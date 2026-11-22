@@ -16,3 +16,7 @@
 {"kind":"done","left":[]}
 {"kind":"self-review","sha256":"1749e91825f211185860d75a40c741c2e7e6057873c1eb12d4fa6380e136ce61","fix":0,"pass":1,"left":[]}
 {"kind":"self-review","sha256":"1f748cf5b7495090cda63f4fc3be96da1987f15c03f3c95c5a771e071c8c93f3","fix":0,"pass":1,"left":[]}
+{"kind":"decided","what":"要件","left":["実装","自己レビュー","検証"]}
+{"kind":"progress","left":["自己レビュー","検証"]}
+{"kind":"done","left":[]}
+{"kind":"self-review","sha256":"25a516dbbe6a24f842c9dbd95b69781a7751aea4cbb4814afbd4ed4017359c02","fix":0,"pass":1,"left":[]}
