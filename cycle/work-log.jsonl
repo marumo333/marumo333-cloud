@@ -20,3 +20,7 @@
 {"kind":"progress","left":["自己レビュー","検証"]}
 {"kind":"done","left":[]}
 {"kind":"self-review","sha256":"25a516dbbe6a24f842c9dbd95b69781a7751aea4cbb4814afbd4ed4017359c02","fix":0,"pass":1,"left":[]}
+{"kind":"decided","what":"要件","left":["実装","自己レビュー","検証"]}
+{"kind":"progress","left":["自己レビュー","検証"]}
+{"kind":"done","left":[]}
+{"kind":"self-review","sha256":"ccdeb407bc30ee64de3d7082ebebb75cf720e12c9f3c08651111f84a3eae1303","fix":0,"pass":1,"left":[]}
