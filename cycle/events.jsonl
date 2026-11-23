@@ -261,3 +261,17 @@
 {"t":"2026-11-20T06:09:36.907Z","type":"token_ledger","cycle":"C-0031","seat":"parent","effort":"high","packet_bytes":0,"tasks":1,"zero_value_reinject":false}
 {"t":"2026-11-20T06:20:00.441Z","type":"human_approved","cycle":"C-0031","merge_sha":"a263d0357f6f64b9104532847cdbacd2cfe179ad","pr":"50"}
 {"t":"2026-11-20T06:20:00.457Z","type":"cycle_open","cycle":"C-0032","source":"after-merge","from":"C-0031"}
+{"t":"2026-11-22T06:24:47.950Z","type":"node_state","cycle":"C-0032","node":"skill:harness-api-budget","state":"used"}
+{"t":"2026-11-22T06:24:47.976Z","type":"node_state","cycle":"C-0032","node":"skill:plan-confirm","state":"skipped"}
+{"t":"2026-11-22T06:24:48.005Z","type":"node_state","cycle":"C-0032","node":"skill:adversarial-review","state":"used"}
+{"t":"2026-11-22T06:24:48.033Z","type":"node_state","cycle":"C-0032","node":"skill:verify","state":"skipped"}
+{"t":"2026-11-22T06:24:48.061Z","type":"node_state","cycle":"C-0032","node":"skill:reflect","state":"skipped"}
+{"t":"2026-11-22T06:24:48.091Z","type":"node_state","cycle":"C-0032","node":"skill:harness-grow","state":"skipped"}
+{"t":"2026-11-22T06:24:48.118Z","type":"token_ledger","cycle":"C-0032","seat":"parent","effort":"medium","packet_bytes":0,"tasks":1,"zero_value_reinject":false}
+{"t":"2026-11-22T09:59:30.137Z","type":"node_state","cycle":"C-0032","node":"skill:harness-api-budget","state":"used"}
+{"t":"2026-11-22T09:59:30.169Z","type":"node_state","cycle":"C-0032","node":"skill:adversarial-review","state":"used"}
+{"t":"2026-11-22T09:59:30.197Z","type":"token_ledger","cycle":"C-0032","seat":"parent","effort":"medium","packet_bytes":0,"tasks":1,"zero_value_reinject":false}
+{"t":"2026-11-22T10:57:33.143Z","type":"node_state","cycle":"C-0032","node":"skill:adversarial-review","state":"used"}
+{"t":"2026-11-22T10:57:33.186Z","type":"token_ledger","cycle":"C-0032","seat":"parent","effort":"medium","packet_bytes":0,"tasks":1,"zero_value_reinject":false}
+{"t":"2026-11-23T01:38:49.388Z","type":"node_state","cycle":"C-0032","node":"skill:adversarial-review","state":"used"}
+{"t":"2026-11-23T01:38:49.425Z","type":"token_ledger","cycle":"C-0032","seat":"parent","effort":"medium","packet_bytes":0,"tasks":1,"zero_value_reinject":false}
